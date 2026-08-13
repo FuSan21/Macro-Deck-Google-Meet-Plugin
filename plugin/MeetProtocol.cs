@@ -74,8 +74,11 @@ namespace FuSan21.MacroDeck.GoogleMeet
             /// <summary>Fork only. Presses a tool's main button. Carries a <c>tool</c> field.</summary>
             public const string StartMeetingTool = "startMeetingTool";
 
-            /// <summary>Fork only. Carries a <c>control</c> field; see <see cref="HostControlNames"/>.</summary>
-            public const string ToggleHostControl = "toggleHostControl";
+            /// <summary>
+            /// Fork only. Applies a whole host-controls configuration: a <c>controls</c>
+            /// object of name → bool, and an optional <c>access</c> string.
+            /// </summary>
+            public const string ApplyHostControls = "applyHostControls";
 
             /// <summary>Fork only.</summary>
             public const string TimerStart = "timerStart";
@@ -123,25 +126,35 @@ namespace FuSan21.MacroDeck.GoogleMeet
     }
 
     /// <summary>
-    /// The switches in Meet's Host controls panel that are worth reaching for mid-call.
+    /// The controls in Meet's Host controls panel, in the order Meet lists them.
     ///
-    /// Meet offers fourteen; the other seven — Ask Gemini, Q&amp;A in live stream, add-on
-    /// activities, third-party capture, continuous chat, hide-until-approved, anonymous
-    /// questions — are all set once before a webinar starts, and listing them would only
-    /// make the seven you might actually hit under pressure harder to find.
+    /// Not all of them are switches: <see cref="UseFullEmojiSet"/> and
+    /// <see cref="AnyoneWithLinkCanAsk"/> are checkboxes nested under the row above them,
+    /// which is why the extension has to know each control's kind.
     ///
-    /// Most stay greyed out until <see cref="HostManagement"/> is on; asking for one of
-    /// those first is reported to the browser console rather than pressed.
+    /// Meet's own <c>Continuous meeting chat</c> is not here: it is greyed out for the
+    /// duration of a call, so a key bound to it could never do anything.
+    ///
+    /// Most rows stay greyed out until <see cref="HostManagement"/> is on; asking for one
+    /// of those first is reported to the browser console rather than pressed.
     /// </summary>
     public enum HostControl
     {
         HostManagement,
         LetContributorsShareScreen,
+        LetContributorsSendReactions,
+        UseFullEmojiSet,
         LetContributorsUnmute,
         LetContributorsTurnOnVideo,
-        LetContributorsSendReactions,
         LetParticipantsSendMessages,
+        AskGemini,
         AllowQuestions,
+        HideQuestionsUntilApproved,
+        AllowAnonymousQuestions,
+        AllowQuestionsInLiveStream,
+        LetContributorsShareAddOns,
+        AllowThirdPartyCapture,
+        AnyoneWithLinkCanAsk,
     }
 
     internal static class HostControlNames
@@ -153,11 +166,43 @@ namespace FuSan21.MacroDeck.GoogleMeet
             {
                 case HostControl.LetContributorsShareScreen: return "shareScreen";
                 case HostControl.LetContributorsSendReactions: return "sendReactions";
+                case HostControl.UseFullEmojiSet: return "fullEmojiSet";
                 case HostControl.LetContributorsUnmute: return "turnOnMicrophone";
                 case HostControl.LetContributorsTurnOnVideo: return "turnOnVideo";
                 case HostControl.LetParticipantsSendMessages: return "sendMessages";
+                case HostControl.AskGemini: return "askGemini";
                 case HostControl.AllowQuestions: return "allowQuestions";
+                case HostControl.HideQuestionsUntilApproved: return "moderateQuestions";
+                case HostControl.AllowAnonymousQuestions: return "anonymousQuestions";
+                case HostControl.AllowQuestionsInLiveStream: return "questionsInLiveStream";
+                case HostControl.LetContributorsShareAddOns: return "shareAddOns";
+                case HostControl.AllowThirdPartyCapture: return "thirdPartyCapture";
+                case HostControl.AnyoneWithLinkCanAsk: return "anyoneWithLinkCanAsk";
                 default: return "hostManagement";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Who may join the meeting. A radio group rather than a toggle, and unlike the rest
+    /// of the host controls Meet applies it to future instances of the meeting too.
+    /// </summary>
+    public enum MeetingAccess
+    {
+        Open,
+        Trusted,
+        Restricted,
+    }
+
+    internal static class MeetingAccessNames
+    {
+        public static string For(MeetingAccess access)
+        {
+            switch (access)
+            {
+                case MeetingAccess.Open: return "open";
+                case MeetingAccess.Restricted: return "restricted";
+                default: return "trusted";
             }
         }
     }

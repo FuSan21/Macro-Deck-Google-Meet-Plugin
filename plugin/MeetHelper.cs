@@ -1,5 +1,6 @@
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 
 namespace FuSan21.MacroDeck.GoogleMeet
 {
@@ -144,14 +145,33 @@ namespace FuSan21.MacroDeck.GoogleMeet
             return Send(message, description);
         }
 
-        /// <summary>Flips one switch in Meet's Host controls panel.</summary>
-        public static bool SendHostControl(HostControl control, string description)
+        /// <summary>
+        /// Applies a saved host-controls configuration. Only the controls present in
+        /// <paramref name="controls"/> are touched; the rest are left as the meeting has
+        /// them.
+        /// </summary>
+        public static bool SendHostControls(
+            IDictionary<HostControl, bool> controls, MeetingAccess? access, string description)
         {
+            var wanted = new JObject();
+            if (controls != null)
+            {
+                foreach (var pair in controls)
+                {
+                    wanted[HostControlNames.For(pair.Key)] = pair.Value;
+                }
+            }
+
             var message = new JObject
             {
-                ["event"] = MeetProtocol.Outbound.ToggleHostControl,
-                ["control"] = HostControlNames.For(control),
+                ["event"] = MeetProtocol.Outbound.ApplyHostControls,
+                ["controls"] = wanted,
             };
+
+            if (access.HasValue)
+            {
+                message["access"] = MeetingAccessNames.For(access.Value);
+            }
 
             return Send(message, description);
         }

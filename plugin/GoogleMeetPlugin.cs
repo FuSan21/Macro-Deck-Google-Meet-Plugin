@@ -70,7 +70,7 @@ namespace FuSan21.MacroDeck.GoogleMeet
                     new StartMeetingToolAction(),
                     new BreakoutRoomsAction(),
                     new TimerAction(),
-                    new ToggleHostControlAction(),
+                    new ApplyHostControlsAction(),
                     new LeaveCallAction(),
                     new OpenMeetAction(),
                 };
