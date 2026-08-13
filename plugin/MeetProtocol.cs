@@ -71,15 +71,6 @@ namespace FuSan21.MacroDeck.GoogleMeet
             /// <summary>Fork only. Carries a <c>tool</c> field; see <see cref="MeetingToolNames"/>.</summary>
             public const string OpenMeetingTool = "openMeetingTool";
 
-            /// <summary>Fork only.</summary>
-            public const string ToggleMeetingTools = "toggleMeetingTools";
-
-            /// <summary>Fork only.</summary>
-            public const string ToggleHostControls = "toggleHostControls";
-
-            /// <summary>Fork only.</summary>
-            public const string ToggleMeetingDetails = "toggleMeetingDetails";
-
             /// <summary>Fork only. Presses a tool's main button. Carries a <c>tool</c> field.</summary>
             public const string StartMeetingTool = "startMeetingTool";
 
@@ -100,21 +91,19 @@ namespace FuSan21.MacroDeck.GoogleMeet
 
             /// <summary>Fork only. Carries an <c>action</c> field; see <see cref="BreakoutActionNames"/>.</summary>
             public const string BreakoutAction = "breakoutAction";
-
-            /// <summary>Fork only. Carries an <c>option</c> field; see <see cref="RecordingOptionNames"/>.</summary>
-            public const string RecordingOption = "recordingOption";
         }
     }
 
-    /// <summary>The buttons in Meet's Breakout rooms editor.</summary>
+    /// <summary>
+    /// The breakout-room buttons worth a key. Opening the editor is left to
+    /// <see cref="MeetingTool.BreakoutRooms"/>, and the form's own Cancel and timer
+    /// controls are mouse work — you are looking at the form when you use them.
+    /// </summary>
     public enum BreakoutAction
     {
-        SetUp,
-        OpenRooms,
         Shuffle,
+        OpenRooms,
         Clear,
-        CancelChanges,
-        RoomTimer,
     }
 
     internal static class BreakoutActionNames
@@ -124,61 +113,32 @@ namespace FuSan21.MacroDeck.GoogleMeet
             switch (action)
             {
                 case BreakoutAction.OpenRooms: return "openRooms";
-                case BreakoutAction.Shuffle: return "shuffle";
                 case BreakoutAction.Clear: return "clear";
-                case BreakoutAction.CancelChanges: return "cancelChanges";
-                case BreakoutAction.RoomTimer: return "roomTimer";
-                default: return "setUp";
+                default: return "shuffle";
             }
         }
     }
 
     /// <summary>
-    /// The three tick-boxes Meet offers on the Recording panel before a recording starts.
-    /// Take Notes with Gemini is ticked by default; the other two are not.
-    /// </summary>
-    public enum RecordingOption
-    {
-        IncludeCaptions,
-        AlsoTranscribe,
-        AlsoTakeNotesWithGemini,
-    }
-
-    internal static class RecordingOptionNames
-    {
-        public static string For(RecordingOption option)
-        {
-            switch (option)
-            {
-                case RecordingOption.AlsoTranscribe: return "alsoTranscribe";
-                case RecordingOption.AlsoTakeNotesWithGemini: return "alsoGeminiNotes";
-                default: return "includeCaptions";
-            }
-        }
-    }
-
-    /// <summary>
-    /// The switches in Meet's Host controls panel, which only the host has.
+    /// The switches in Meet's Host controls panel that are worth reaching for mid-call.
     ///
-    /// Several of them stay greyed out until <see cref="HostManagement"/> is on; asking
-    /// for one of those first is reported to the browser console rather than pressed.
+    /// Meet offers fourteen; the other seven — Ask Gemini, Q&amp;A in live stream, add-on
+    /// activities, third-party capture, continuous chat, hide-until-approved, anonymous
+    /// questions — are all set once before a webinar starts, and listing them would only
+    /// make the seven you might actually hit under pressure harder to find.
+    ///
+    /// Most stay greyed out until <see cref="HostManagement"/> is on; asking for one of
+    /// those first is reported to the browser console rather than pressed.
     /// </summary>
     public enum HostControl
     {
         HostManagement,
         LetContributorsShareScreen,
-        LetContributorsSendReactions,
         LetContributorsUnmute,
         LetContributorsTurnOnVideo,
+        LetContributorsSendReactions,
         LetParticipantsSendMessages,
-        ContinuousMeetingChat,
-        AskGemini,
         AllowQuestions,
-        HideQuestionsUntilApproved,
-        AllowAnonymousQuestions,
-        AllowQuestionsInLiveStream,
-        LetContributorsShareAddOns,
-        AllowThirdPartyCapture,
     }
 
     internal static class HostControlNames
@@ -193,14 +153,7 @@ namespace FuSan21.MacroDeck.GoogleMeet
                 case HostControl.LetContributorsUnmute: return "turnOnMicrophone";
                 case HostControl.LetContributorsTurnOnVideo: return "turnOnVideo";
                 case HostControl.LetParticipantsSendMessages: return "sendMessages";
-                case HostControl.ContinuousMeetingChat: return "continuousChat";
-                case HostControl.AskGemini: return "askGemini";
                 case HostControl.AllowQuestions: return "allowQuestions";
-                case HostControl.HideQuestionsUntilApproved: return "moderateQuestions";
-                case HostControl.AllowAnonymousQuestions: return "anonymousQuestions";
-                case HostControl.AllowQuestionsInLiveStream: return "questionsInLiveStream";
-                case HostControl.LetContributorsShareAddOns: return "shareAddOns";
-                case HostControl.AllowThirdPartyCapture: return "thirdPartyCapture";
                 default: return "hostManagement";
             }
         }

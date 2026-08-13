@@ -21,22 +21,22 @@ class HostControlsEventHandler extends SDEventHandler {
 
   static SwitchSelector = '[jsname="DMn7nd"][role="switch"]';
 
-  /** Keyed by the name the plugin sends; the value is the start of the switch's label. */
+  /**
+   * Keyed by the name the plugin sends; the value is the start of the switch's label.
+   *
+   * Meet offers fourteen switches. Only these seven are here — the ones a host might
+   * reach for during a call. The rest (Ask Gemini, Q&A in live stream, add-on activities,
+   * third-party capture, continuous chat, hide-until-approved, anonymous questions) are
+   * all set once before a webinar starts, and carrying them would only bury these.
+   */
   static Controls = {
     hostManagement: "Host management",
     shareScreen: "Let contributors share their screen",
-    sendReactions: "Let contributors send reactions",
     turnOnMicrophone: "Let contributors turn on their microphone",
     turnOnVideo: "Let contributors turn on their video",
-    continuousChat: "Continuous meeting chat",
+    sendReactions: "Let contributors send reactions",
     sendMessages: "Let participants send messages",
-    askGemini: "Ask Gemini",
     allowQuestions: "Allow questions in Q&A",
-    moderateQuestions: "Hide each question until a host approves",
-    anonymousQuestions: "Allow anonymous questions",
-    questionsInLiveStream: "Allow Q&A in live stream",
-    shareAddOns: "Let contributors share add-on activities",
-    thirdPartyCapture: "Allow third-party apps to collect audio and video",
   };
 
   handleStreamDeckEvent = (message) => {

@@ -20,10 +20,6 @@ class MeetingToolsEventHandler extends SDEventHandler {
   /** The side panel holding the tool cards. */
   static ToolsPanelId = "10";
 
-  static HostControlsPanelId = "16";
-
-  static MeetingDetailsPanelId = "5";
-
   /**
    * One entry per card.
    *
@@ -55,20 +51,18 @@ class MeetingToolsEventHandler extends SDEventHandler {
 
   /**
    * The buttons inside the Breakout rooms editor, and the three checkboxes Meet offers
-   * before a recording starts. The checkboxes carry Google's generic input jsname, so
-   * they are addressed by their order within the Recording panel — which is fixed, and
-   * unlike their labels does not change with the display language.
+   * that are worth a key of their own.
+   *
+   * Opening the editor is left to the Breakout rooms tool; its Cancel and room-timer
+   * controls are deliberately absent, because you are looking at the form when you use
+   * those. Shuffle assigns everyone at random, which is what turns "shuffle, then open"
+   * into a two-key sequence that runs the whole feature.
    */
   static BreakoutActions = {
-    setUp: '[jsname="jjbqZd"]',
-    openRooms: '[jsname="vGYErf"]',
     shuffle: '[jsname="ZvBrEb"]',
+    openRooms: '[jsname="vGYErf"]',
     clear: '[jsname="uL0KOe"]',
-    cancelChanges: '[jsname="TLo5Gb"]',
-    roomTimer: '[jsname="bOBs5e"]',
   };
-
-  static RecordingOptionOrder = ["includeCaptions", "alsoTranscribe", "alsoGeminiNotes"];
 
   static CardSelector = '[jsname="lTgCnb"]';
 
@@ -79,23 +73,11 @@ class MeetingToolsEventHandler extends SDEventHandler {
       case "openMeetingTool":
         this._openTool(message.tool);
         break;
-      case "toggleMeetingTools":
-        this._togglePanel(MeetingToolsEventHandler.ToolsPanelId);
-        break;
-      case "toggleHostControls":
-        this._togglePanel(MeetingToolsEventHandler.HostControlsPanelId);
-        break;
-      case "toggleMeetingDetails":
-        this._togglePanel(MeetingToolsEventHandler.MeetingDetailsPanelId);
-        break;
       case "startMeetingTool":
         this._startTool(message.tool);
         break;
       case "breakoutAction":
         this._breakout(message.action);
-        break;
-      case "recordingOption":
-        this._recordingOption(message.option);
         break;
     }
   }
@@ -286,44 +268,6 @@ class MeetingToolsEventHandler extends SDEventHandler {
     }
 
     document.querySelector(selector).click();
-  }
-
-  /**
-   * Ticks or unticks one of the three options Meet offers before a recording starts:
-   * include captions, also start a transcript, also start Take Notes with Gemini. They
-   * are only settable while the Recording panel is open and the recording has not begun.
-   */
-  _recordingOption = async (optionName) => {
-    const index = MeetingToolsEventHandler.RecordingOptionOrder.indexOf(optionName);
-    if (index < 0) {
-      console.error("Unknown recording option requested:", optionName);
-      return;
-    }
-
-    if (!document.querySelector(MeetingToolsEventHandler.Tools.record.primary)) {
-      if (!await this._openTool("record")) {
-        return;
-      }
-      if (!await MeetingToolsEventHandler.waitFor(
-        () => document.querySelector(MeetingToolsEventHandler.Tools.record.primary))) {
-        console.error("Could not open the recording panel to set its options.");
-        return;
-      }
-    }
-
-    const panel = document.querySelector(MeetingToolsEventHandler.Tools.record.primary)
-      ?.closest("div[class]")?.parentElement ?? document;
-    const boxes = [...panel.querySelectorAll('input[type="checkbox"]')]
-      .filter((b) => b.getClientRects().length);
-
-    if (boxes.length <= index) {
-      console.error(
-        `Expected at least ${index + 1} recording options but found ${boxes.length}. ` +
-        "Meet may have changed the panel, or the recording has already started.");
-      return;
-    }
-
-    boxes[index].click();
   }
 
   /**

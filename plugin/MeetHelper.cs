@@ -116,18 +116,6 @@ namespace FuSan21.MacroDeck.GoogleMeet
             return Send(message, description);
         }
 
-        /// <summary>Ticks or unticks one of the Recording panel's pre-start options.</summary>
-        public static bool SendRecordingOption(RecordingOption option, string description)
-        {
-            var message = new JObject
-            {
-                ["event"] = MeetProtocol.Outbound.RecordingOption,
-                ["option"] = RecordingOptionNames.For(option),
-            };
-
-            return Send(message, description);
-        }
-
         /// <summary>Flips one switch in Meet's Host controls panel.</summary>
         public static bool SendHostControl(HostControl control, string description)
         {

@@ -8,21 +8,22 @@ using System;
 namespace FuSan21.MacroDeck.GoogleMeet.Actions
 {
     /// <summary>
-    /// Drives Meet's Breakout rooms editor: open the editor, shuffle everyone at random,
-    /// clear the assignments, set the rooms' countdown, discard changes, or open the rooms.
+    /// Shuffles everyone into rooms at random, clears those assignments again, or opens
+    /// the rooms. <b>Open rooms</b> is the one that actually moves people.
     ///
-    /// <b>Open rooms</b> is the one that actually moves people. The rest set it up.
+    /// Assigning specific people to specific rooms is drag-and-drop and stays a mouse job —
+    /// but Shuffle does the assignment for you, so <i>Shuffle</i> then <i>Open rooms</i>
+    /// runs the whole feature from two keys.
     ///
-    /// Assigning specific people to specific rooms is drag-and-drop, so it stays a mouse
-    /// job — but Shuffle does the assignment for you, which makes "shuffle, then open" a
-    /// two-key sequence that runs the whole thing.
+    /// Opening the editor in the first place is <i>Start Meeting Tool → Breakout rooms</i>;
+    /// these three navigate there on their own if it is not already showing.
     /// </summary>
     public class BreakoutRoomsAction : PluginAction
     {
         public override string Name => "Breakout Rooms";
 
         public override string Description =>
-            "Set up, shuffle, clear or open Google Meet breakout rooms";
+            "Shuffle people into Google Meet breakout rooms, clear them, or open the rooms";
 
         public override bool CanConfigure => true;
 
@@ -36,7 +37,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.Actions
             try
             {
                 var action = ChoiceConfig<BreakoutAction>.LoadConfig(Configuration)?.Choice
-                    ?? BreakoutAction.SetUp;
+                    ?? BreakoutAction.Shuffle;
                 MeetHelper.SendBreakoutAction(action, $"{Name} ({action})");
             }
             catch (Exception ex)

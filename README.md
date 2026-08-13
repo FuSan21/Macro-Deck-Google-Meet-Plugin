@@ -77,13 +77,9 @@ bind it to the button's state, so the key lights up to match Meet without any ex
 | Toggle Presenting | | `meet_is_presenting` | ✅ |
 | Open Meeting Tool | which tool | | ✅ |
 | Start Meeting Tool | which tool | | ✅ |
-| Recording Option | captions / transcript / Gemini | | ✅ |
-| Breakout Rooms | set up, shuffle, clear, open… | | ✅ |
+| Breakout Rooms | shuffle, open rooms, clear | | ✅ |
 | Timer | start/pause, cancel, +1 min, alarm | | ✅ |
 | Toggle Host Control | which switch | | ✅ |
-| Toggle Meeting Tools | | | ✅ |
-| Toggle Host Controls | | | ✅ |
-| Toggle Meeting Details | | | ✅ |
 | Leave Call | | `meet_in_meeting` | |
 | Open Google Meet | | | no extension at all |
 
@@ -135,10 +131,11 @@ stays a deliberate act rather than something a single key press slips past.
 Stopping works identically, dialog and all. The Start/Stop control is the same button, so one
 button bound to *Start Meeting Tool → Record* both starts and stops.
 
-**Recording Option** ticks the three boxes Meet offers before a recording begins: include
-captions, also start a transcript, also start Take Notes with Gemini. Worth knowing that the
-Gemini one is **on by default** — an untouched recording also produces a notes document. Bind
-these ahead of the Record button to get a repeatable setup.
+Meet also offers three tick-boxes on the Recording panel before a recording begins: include
+captions, also start a transcript, and **also start Take Notes with Gemini, which is on by
+default** — so an untouched recording produces a Gemini notes document as well as the video.
+Those are settings rather than actions, so they are not bound to keys; set them once in the
+panel.
 
 #### What still needs a human
 
@@ -162,9 +159,15 @@ and presses nothing.
 
 ### Host controls
 
-**Toggle Host Control** flips one switch in the host panel — fourteen of them, from the
-`Host management` master switch down to who may unmute, share, react, chat or ask questions.
-Most stay greyed out until `Host management` is on, so that is usually the first to bind.
+**Toggle Host Control** flips one switch in the host panel: the `Host management` master
+switch, plus who may share their screen, unmute, turn on video, react, send messages or ask
+questions. Most stay greyed out until `Host management` is on, so that is usually the first
+to bind.
+
+Meet has fourteen switches; these seven are the ones a host might reach for mid-call. The
+others — Ask Gemini, Q&A in live stream, add-on activities, third-party capture, continuous
+chat, hide-until-approved, anonymous questions — are set once before a webinar starts, and
+listing them would only bury the seven that matter under pressure.
 
 Only the host has this panel. For anyone else Meet does not render it, and the extension says
 so rather than pressing something.
