@@ -104,6 +104,23 @@ namespace FuSan21.MacroDeck.GoogleMeet
             return Send(message, description);
         }
 
+        /// <summary>
+        /// Starts the timer at a specific duration. Only has an effect while the timer is
+        /// stopped — a running or paused timer's duration is fixed, so the extension
+        /// resumes instead of rewriting it.
+        /// </summary>
+        public static bool SendTimerStart(int minutes, int seconds, string description)
+        {
+            var message = new JObject
+            {
+                ["event"] = MeetProtocol.Outbound.TimerStart,
+                ["minutes"] = minutes,
+                ["seconds"] = seconds,
+            };
+
+            return Send(message, description);
+        }
+
         /// <summary>Presses one button in Meet's Breakout rooms editor.</summary>
         public static bool SendBreakoutAction(BreakoutAction action, string description)
         {

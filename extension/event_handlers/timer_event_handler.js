@@ -46,7 +46,7 @@ class TimerEventHandler extends SDEventHandler {
   handleStreamDeckEvent = (message) => {
     switch (message.event) {
       case "timerStart":
-        this._start();
+        this._start(message.minutes, message.seconds);
         break;
       case "timerPause":
         this._pause();
@@ -178,22 +178,82 @@ class TimerEventHandler extends SDEventHandler {
   }
 
   /**
+   * The Minutes and Seconds boxes, in that order. Only editable while stopped, and they
+   * carry Google's generic input jsname, so order is the only thing distinguishing them.
+   *
+   * Note that Meet runs its timers about 23 seconds longer than asked — a 10 second timer
+   * counts down from 33, a 12:30 one from 12:53. That is Meet's own doing, not this
+   * extension's: its untouched 5:00 default starts at 5:23 with nothing written to either
+   * box. Deliberately not compensated for, since a hidden -23s here would disagree with
+   * the duration Meet itself displays, and would start under-running the moment Google
+   * fixes it.
+   */
+  static DurationInputSelector = '[jsname="YPqjbf"]';
+
+  /**
+   * Writes a value into one of Meet's number boxes.
+   *
+   * Assigning to `.value` alone changes what is on screen and nothing else — Meet is
+   * listening for the `input` event, not for the property — so the write goes through the
+   * prototype's own setter and the event is raised by hand. Setting the property directly
+   * would be silently swallowed by the framework's value tracking.
+   */
+  static _setInput = (input, value) => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+    input.focus();
+    setter.call(input, String(value));
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    input.blur();
+  }
+
+  /**
    * Starts a stopped timer, or resumes a held one, and does nothing at all if it is
    * already counting down — so a key bound to Start is safe to press twice, and safe to
    * press when somebody else already started the timer.
+   *
+   * A duration is only applied from a standing start. Meet fixes the length when a timer
+   * begins and disables the boxes, so a paused timer is resumed at whatever it has left
+   * rather than being restarted at a new length, which is what "resume" ought to mean.
    */
-  _start = async () => {
+  _start = async (minutes, seconds) => {
     const state = TimerEventHandler.state();
     if (state === "running") {
       return;
     }
 
-    // Resuming can go through the tray; starting from nothing cannot, because with no
-    // timer there is no chip to hover.
-    await this._act(
-      state === "paused" ? TimerEventHandler.TrayStartPauseSelector : null,
-      TimerEventHandler.StartPauseSelector,
-      "start the timer");
+    if (state === "paused") {
+      // Resuming can go through the tray, which leaves the side panel alone.
+      await this._act(
+        TimerEventHandler.TrayStartPauseSelector,
+        TimerEventHandler.StartPauseSelector,
+        "resume the timer");
+      return;
+    }
+
+    // Starting from nothing needs the panel: there is no chip to hover, and the duration
+    // boxes only exist there.
+    if (!await this._ensureTimerPanel()) {
+      console.error("Could not reach Meet's timer to start it.");
+      return;
+    }
+
+    if (Number.isInteger(minutes) || Number.isInteger(seconds)) {
+      const inputs = [...document.querySelectorAll(TimerEventHandler.DurationInputSelector)]
+        .filter((i) => i.getClientRects().length && !i.disabled);
+
+      if (inputs.length < 2) {
+        console.error(
+          `Expected the timer's Minutes and Seconds boxes but found ${inputs.length}. ` +
+          "Starting at whatever duration Meet is showing instead.");
+      } else {
+        TimerEventHandler._setInput(inputs[0], Number.isInteger(minutes) ? minutes : 0);
+        TimerEventHandler._setInput(inputs[1], Number.isInteger(seconds) ? seconds : 0);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+    }
+
+    document.querySelector(TimerEventHandler.StartPauseSelector)?.click();
   }
 
   /** Pauses a running timer, and does nothing if it is stopped or already held. */

@@ -36,15 +36,23 @@ namespace FuSan21.MacroDeck.GoogleMeet.Actions
 
         public override ActionConfigControl GetActionConfigControl(ActionConfigurator actionConfigurator)
         {
-            return new ChoiceConfig<TimerCommand>(this, "Timer action");
+            return new TimerConfig(this);
         }
 
         public override void Trigger(string clientId, ActionButton actionButton)
         {
             try
             {
-                var command = ChoiceConfig<TimerCommand>.LoadConfig(Configuration)?.Choice
-                    ?? TimerCommand.Start;
+                var config = TimerConfig.LoadConfig(Configuration);
+                var command = config?.Command ?? TimerCommand.Start;
+
+                if (command == TimerCommand.Start &&
+                    TimerConfig.TryParseDuration(config?.Duration, out var minutes, out var seconds))
+                {
+                    MeetHelper.SendTimerStart(minutes, seconds, $"{Name} (Start {minutes}:{seconds:00})");
+                    return;
+                }
+
                 MeetHelper.Send(TimerCommands.For(command), $"{Name} ({command})");
             }
             catch (Exception ex)
