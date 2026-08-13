@@ -80,6 +80,20 @@ class StreamDeckConnectionMananger {
     };
 
     this._socket.onopen = () => {
+      /**
+       * Say which build this is, first thing.
+       *
+       * Chrome keeps its own copy of an unpacked extension until you press Reload, so the
+       * files on disk being current proves nothing about what is actually running — and
+       * "did it reload?" is otherwise unanswerable from the desktop side. Announcing the
+       * version puts the answer in Macro Deck's log every time a tab connects.
+       */
+      this.sendMessage({
+        event: "extensionHello",
+        version: chrome.runtime.getManifest().version,
+        name: chrome.runtime.getManifest().name,
+      });
+
       this._attemptStateTransmission();
     };
 

@@ -29,6 +29,12 @@ namespace FuSan21.MacroDeck.GoogleMeet
 
         public static string LastError => _server.LastError;
 
+        /// <summary>
+        /// The version of the browser extension actually running, as it reported itself on
+        /// connecting. Null until a tab says.
+        /// </summary>
+        public static string ExtensionVersion { get; private set; }
+
         public static MeetState State
         {
             get { lock (_stateLock) { return _state.Clone(); } }
@@ -62,6 +68,8 @@ namespace FuSan21.MacroDeck.GoogleMeet
                 previous = _state;
                 _state = MeetState.Empty;
             }
+
+            ExtensionVersion = null;
 
             PluginInstance.Plugin?.ApplyState(previous, MeetState.Empty);
         }
@@ -192,7 +200,9 @@ namespace FuSan21.MacroDeck.GoogleMeet
                 return false;
             }
 
-            PluginInstance.Logger.Trace("{0}: sent {1}", description, message.ToString(Newtonsoft.Json.Formatting.None));
+            // Info, not Trace: one line per key press is not noise, and without it a press
+            // that reaches the browser and a press that never left look identical in the log.
+            PluginInstance.Logger.Info("{0}: sent {1}", description, message.ToString(Newtonsoft.Json.Formatting.None));
             return true;
         }
 
@@ -260,6 +270,17 @@ namespace FuSan21.MacroDeck.GoogleMeet
 
                 case MeetProtocol.Inbound.PresentingState:
                     Apply(state => state.IsPresenting = message.Value<bool?>("presenting") ?? false);
+                    break;
+
+                case MeetProtocol.Inbound.ExtensionHello:
+                    // Logged at Info rather than Trace on purpose: this is the answer to
+                    // "is Chrome running the extension I just changed?", and it is no use
+                    // buried at a level the log file does not keep.
+                    ExtensionVersion = message.Value<string>("version");
+                    PluginInstance.Logger.Info(
+                        "Connected tab is running \"{0}\" version {1}",
+                        message.Value<string>("name") ?? "(unnamed)",
+                        ExtensionVersion ?? "(unknown)");
                     break;
 
                 default:

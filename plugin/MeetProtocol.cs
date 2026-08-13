@@ -29,6 +29,13 @@ namespace FuSan21.MacroDeck.GoogleMeet
 
             /// <summary>Fork only.</summary>
             public const string PresentingState = "presentingState";
+
+            /// <summary>
+            /// Fork only. Sent once per connection, carrying <c>version</c> and <c>name</c>.
+            /// Chrome keeps its own copy of an unpacked extension until it is reloaded, so
+            /// this is the only way the desktop side can tell which build is really running.
+            /// </summary>
+            public const string ExtensionHello = "extensionHello";
         }
 
         /// <summary>Commands we send to the extension.</summary>
