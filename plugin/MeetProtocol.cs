@@ -78,7 +78,10 @@ namespace FuSan21.MacroDeck.GoogleMeet
             public const string ToggleHostControl = "toggleHostControl";
 
             /// <summary>Fork only.</summary>
-            public const string TimerStartPause = "timerStartPause";
+            public const string TimerStart = "timerStart";
+
+            /// <summary>Fork only.</summary>
+            public const string TimerPause = "timerPause";
 
             /// <summary>Fork only.</summary>
             public const string TimerCancel = "timerCancel";
@@ -196,11 +199,20 @@ namespace FuSan21.MacroDeck.GoogleMeet
         }
     }
 
-    /// <summary>What a Timer button press should do.</summary>
+    /// <summary>
+    /// What a Timer button press should do.
+    ///
+    /// Meet drives start, pause and resume from a single button, but they are separate
+    /// here: <see cref="Start"/> does nothing when the timer is already counting down and
+    /// <see cref="Pause"/> does nothing when it is not, so each key means one thing and
+    /// can be pressed twice, or pressed when somebody else already started the timer,
+    /// without flipping it to the opposite of what the key says.
+    /// </summary>
     public enum TimerCommand
     {
-        StartOrPause,
-        Cancel,
+        Start,
+        Pause,
+        Stop,
         AddOneMinute,
         ToggleAlarm,
     }
@@ -211,10 +223,11 @@ namespace FuSan21.MacroDeck.GoogleMeet
         {
             switch (command)
             {
-                case TimerCommand.Cancel: return MeetProtocol.Outbound.TimerCancel;
+                case TimerCommand.Pause: return MeetProtocol.Outbound.TimerPause;
+                case TimerCommand.Stop: return MeetProtocol.Outbound.TimerCancel;
                 case TimerCommand.AddOneMinute: return MeetProtocol.Outbound.TimerAddMinute;
                 case TimerCommand.ToggleAlarm: return MeetProtocol.Outbound.TimerToggleAlarm;
-                default: return MeetProtocol.Outbound.TimerStartPause;
+                default: return MeetProtocol.Outbound.TimerStart;
             }
         }
     }

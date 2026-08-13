@@ -123,24 +123,53 @@ class MeetingToolsEventHandler extends SDEventHandler {
    * of a card is what decides, not a remembered flag — the user may have opened or
    * closed the panel by hand at any point.
    */
+  /**
+   * The cards, but only the ones actually on screen.
+   *
+   * Presence is not enough: once the tools panel has been opened, Meet leaves the cards
+   * in the DOM for the rest of the call, so they are still found when the panel is
+   * closed, or showing chat, or showing a tool's own sub-panel. Checking for a layout box
+   * is what tells those apart — without it every later request would think the panel was
+   * already open and click a card nobody can see.
+   */
+  static visibleCards = () =>
+    [...document.querySelectorAll(MeetingToolsEventHandler.CardSelector)]
+      .filter((c) => c.getClientRects().length);
+
   _ensureToolsPanel = async () => {
-    if (document.querySelector(MeetingToolsEventHandler.CardSelector)) {
+    if (MeetingToolsEventHandler.visibleCards().length) {
       return true;
+    }
+
+    // Inside a tool's sub-panel the card list is one step back, and pressing the panel
+    // button there would close the whole side panel instead of returning to the list.
+    const back = [...document.querySelectorAll('button, [role="button"]')]
+      .find((b) => b.querySelector("i")?.textContent.trim() === "arrow_back" && b.getClientRects().length);
+    if (back) {
+      back.click();
+      if (await MeetingToolsEventHandler.waitFor(
+        () => MeetingToolsEventHandler.visibleCards().length, 1500)) {
+        return true;
+      }
     }
 
     this._togglePanel(MeetingToolsEventHandler.ToolsPanelId);
     return await MeetingToolsEventHandler.waitFor(
-      () => document.querySelector(MeetingToolsEventHandler.CardSelector));
+      () => MeetingToolsEventHandler.visibleCards().length);
   }
 
   _findCard = (tool) => {
-    for (const card of document.querySelectorAll(MeetingToolsEventHandler.CardSelector)) {
+    const cards = MeetingToolsEventHandler.visibleCards();
+
+    for (const card of cards) {
       if (card.querySelector("i")?.textContent.trim() === tool.icon) {
         return card;
       }
     }
 
-    return document.querySelector(`[jsname="${tool.jsname}"]`)?.closest(MeetingToolsEventHandler.CardSelector) ?? null;
+    const byJsname = document.querySelector(`[jsname="${tool.jsname}"]`)
+      ?.closest(MeetingToolsEventHandler.CardSelector);
+    return cards.includes(byJsname) ? byJsname : null;
   }
 
   /** Returns whether the tool's card was reached and pressed. */

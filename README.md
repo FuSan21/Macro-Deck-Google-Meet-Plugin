@@ -78,7 +78,7 @@ bind it to the button's state, so the key lights up to match Meet without any ex
 | Open Meeting Tool | which tool | | ✅ |
 | Start Meeting Tool | which tool | | ✅ |
 | Breakout Rooms | shuffle, open rooms, clear | | ✅ |
-| Timer | start/pause, cancel, +1 min, alarm | | ✅ |
+| Timer | start, pause, stop, +1 min, alarm | | ✅ |
 | Toggle Host Control | which switch | | ✅ |
 | Leave Call | | `meet_in_meeting` | |
 | Open Google Meet | | | no extension at all |
@@ -148,9 +148,19 @@ Speech translation is a true toggle, but its off switch is a different button fr
 switch, and turning it off asks for confirmation too. It also prompts every participant to
 choose their language.
 
-**Timer** reaches two levels deep on its own, so start/pause, cancel, +1 minute and the alarm
-toggle all work from anywhere in the call. Setting the duration is still typing — that is two
-text fields, not a button.
+**Timer** works from anywhere in the call, and does it without disturbing your side panel.
+
+Meet drives start, pause and resume from one button, but the action keeps **Start** and
+**Pause** separate: each does nothing when the timer is already in the state it would produce,
+so a key labelled Start never pauses. That matters when you cannot see the panel, or when
+somebody else started the timer.
+
+Once a timer exists the controls come from the tray hidden behind the top-bar chip rather than
+from the side panel, so pressing a key does not throw away whatever you had open. Starting from
+nothing has to use the panel — with no timer, there is no chip to reach for. The alarm toggle
+is panel-only too; the tray does not carry it.
+
+Setting the duration is still typing: two text fields, not a button.
 
 Which cards a meeting offers depends on the host's Workspace plan and on whether you are the
 host; a personal Google account sees only Speech translation and Timer. Asking for a tool that
