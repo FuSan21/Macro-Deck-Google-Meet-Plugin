@@ -217,6 +217,18 @@ namespace FuSan21.MacroDeck.GoogleMeet
         ToggleAlarm,
     }
 
+    /// <summary>
+    /// What Start should do about the timer's alarm. Setting it to a state rather than
+    /// toggling means a button labelled "start silently" means it every time, whatever
+    /// the last person to touch the timer left behind.
+    /// </summary>
+    public enum TimerAlarm
+    {
+        LeaveAsIs,
+        On,
+        Off,
+    }
+
     internal static class TimerCommands
     {
         public static string For(TimerCommand command)

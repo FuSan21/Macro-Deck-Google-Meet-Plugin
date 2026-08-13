@@ -109,14 +109,25 @@ namespace FuSan21.MacroDeck.GoogleMeet
         /// stopped — a running or paused timer's duration is fixed, so the extension
         /// resumes instead of rewriting it.
         /// </summary>
-        public static bool SendTimerStart(int minutes, int seconds, string description)
+        public static bool SendTimerStart(int? minutes, int? seconds, TimerAlarm alarm, string description)
         {
             var message = new JObject
             {
                 ["event"] = MeetProtocol.Outbound.TimerStart,
-                ["minutes"] = minutes,
-                ["seconds"] = seconds,
             };
+
+            // Omitted rather than zeroed, so "no duration set" keeps whatever Meet is
+            // showing instead of starting a 0:00 timer.
+            if (minutes.HasValue && seconds.HasValue)
+            {
+                message["minutes"] = minutes.Value;
+                message["seconds"] = seconds.Value;
+            }
+
+            if (alarm != TimerAlarm.LeaveAsIs)
+            {
+                message["alarm"] = alarm == TimerAlarm.On;
+            }
 
             return Send(message, description);
         }

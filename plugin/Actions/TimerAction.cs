@@ -46,11 +46,26 @@ namespace FuSan21.MacroDeck.GoogleMeet.Actions
                 var config = TimerConfig.LoadConfig(Configuration);
                 var command = config?.Command ?? TimerCommand.Start;
 
-                if (command == TimerCommand.Start &&
-                    TimerConfig.TryParseDuration(config?.Duration, out var minutes, out var seconds))
+                if (command == TimerCommand.Start)
                 {
-                    MeetHelper.SendTimerStart(minutes, seconds, $"{Name} (Start {minutes}:{seconds:00})");
-                    return;
+                    var hasDuration = TimerConfig.TryParseDuration(config?.Duration, out var m, out var s);
+                    var alarm = config?.Alarm ?? TimerAlarm.LeaveAsIs;
+
+                    if (hasDuration || alarm != TimerAlarm.LeaveAsIs)
+                    {
+                        var summary = hasDuration ? $"Start {m}:{s:00}" : "Start";
+                        if (alarm != TimerAlarm.LeaveAsIs)
+                        {
+                            summary += $", alarm {alarm.ToString().ToLowerInvariant()}";
+                        }
+
+                        MeetHelper.SendTimerStart(
+                            hasDuration ? m : (int?)null,
+                            hasDuration ? s : (int?)null,
+                            alarm,
+                            $"{Name} ({summary})");
+                        return;
+                    }
                 }
 
                 MeetHelper.Send(TimerCommands.For(command), $"{Name} ({command})");

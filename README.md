@@ -160,13 +160,18 @@ from the side panel, so pressing a key does not throw away whatever you had open
 nothing has to use the panel — with no timer, there is no chip to reach for. The alarm toggle
 is panel-only too; the tray does not carry it.
 
-**Start takes a duration.** Type it into the action's own field — `5` for five minutes,
-`1:30` for a minute and a half, `:45` for forty-five seconds — and the key sets Meet's boxes
-and starts. Leave it empty to start at whatever duration Meet is already showing.
+**Start takes a duration and an alarm setting.** Type the duration into the action's own
+field — `5` for five minutes, `1:30` for a minute and a half, `:45` for forty-five seconds —
+and set the alarm to **On**, **Off** or **Leave as is**. One key then configures and starts
+the timer, so "five minutes, silently" is a single press.
 
-The duration only applies from a standing start. Meet fixes the length once a timer begins
-and disables the boxes, so pressing Start on a *paused* timer resumes it at what is left
-rather than restarting it at a new length.
+The alarm is *set*, not toggled, so a button that says silent stays silent however many times
+it is pressed and whoever last touched the timer. Leave the duration empty to start at
+whatever Meet is already showing.
+
+Both only apply from a standing start. Meet fixes a timer's length once it begins and
+disables the boxes, so pressing Start on a *paused* timer resumes it at what is left rather
+than restarting it at a new length.
 
 > **Meet runs its timers about 23 seconds long.** Ask for 10 seconds and it counts down from
 > 33; ask for 12:30 and it starts at 12:53. This is Meet's own behaviour — its untouched

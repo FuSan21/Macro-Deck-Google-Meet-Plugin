@@ -40,13 +40,20 @@ class TimerEventHandler extends SDEventHandler {
 
   static AddMinuteSelector = '[jsname="xLroh"]';
 
-  /** Whether the timer makes a noise when it runs out. Tray has no equivalent. */
+  /**
+   * Whether the timer makes a noise when it runs out. The tray has no equivalent, so this
+   * is panel-only.
+   *
+   * Its state lives in `aria-pressed`, and only there — the icon stays `volume_up` whether
+   * the alarm is on or off, so the ligature that identifies every other control in this
+   * extension says nothing here.
+   */
   static AlarmSelector = '[jsname="EAB7Kc"]';
 
   handleStreamDeckEvent = (message) => {
     switch (message.event) {
       case "timerStart":
-        this._start(message.minutes, message.seconds);
+        this._start(message.minutes, message.seconds, message.alarm);
         break;
       case "timerPause":
         this._pause();
@@ -212,11 +219,12 @@ class TimerEventHandler extends SDEventHandler {
    * already counting down — so a key bound to Start is safe to press twice, and safe to
    * press when somebody else already started the timer.
    *
-   * A duration is only applied from a standing start. Meet fixes the length when a timer
-   * begins and disables the boxes, so a paused timer is resumed at whatever it has left
-   * rather than being restarted at a new length, which is what "resume" ought to mean.
+   * A duration and an alarm setting are only applied from a standing start. Meet fixes the
+   * length when a timer begins and disables the boxes, so a paused timer is resumed at
+   * whatever it has left rather than being restarted at a new length, which is what
+   * "resume" ought to mean.
    */
-  _start = async (minutes, seconds) => {
+  _start = async (minutes, seconds, alarm) => {
     const state = TimerEventHandler.state();
     if (state === "running") {
       return;
@@ -253,7 +261,31 @@ class TimerEventHandler extends SDEventHandler {
       }
     }
 
+    if (typeof alarm === "boolean") {
+      await TimerEventHandler._setAlarm(alarm);
+    }
+
     document.querySelector(TimerEventHandler.StartPauseSelector)?.click();
+  }
+
+  /**
+   * Puts the alarm into a given state rather than flipping it, so a button that says
+   * "start silently" means it however many times it is pressed, and whatever the last
+   * person to touch the timer left behind.
+   */
+  static _setAlarm = async (wanted) => {
+    const button = document.querySelector(TimerEventHandler.AlarmSelector);
+    if (!button) {
+      console.error("No timer alarm button found; leaving the alarm as it is.");
+      return;
+    }
+
+    if ((button.getAttribute("aria-pressed") === "true") === wanted) {
+      return;
+    }
+
+    button.click();
+    await new Promise((resolve) => setTimeout(resolve, 300));
   }
 
   /** Pauses a running timer, and does nothing if it is stopped or already held. */

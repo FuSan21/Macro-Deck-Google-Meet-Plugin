@@ -26,12 +26,17 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             /// also what happens for every command other than Start.
             /// </summary>
             public string Duration { get; set; }
+
+            /// <summary>Whether Start should also silence the timer, or make sure it chimes.</summary>
+            public TimerAlarm Alarm { get; set; }
         }
 
         private readonly PluginAction _action;
         private readonly RoundedComboBox _command;
         private readonly RoundedTextBox _duration;
+        private readonly RoundedComboBox _alarm;
         private readonly Label _durationLabel;
+        private readonly Label _alarmLabel;
         private readonly Label _hint;
 
         public TimerConfig(PluginAction action)
@@ -55,13 +60,23 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
                 PlaceHolderText = "5  or  1:30"
             };
 
+            _alarmLabel = new Label { Text = "Alarm", AutoSize = true, Margin = new Padding(0, 10, 0, 3) };
+            _alarm = new RoundedComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 200
+            };
+            _alarm.Items.AddRange(new object[] { "Leave as is", "On", "Off" });
+            _alarm.SelectedIndex = 0;
+
             _hint = new Label
             {
-                Text = "Leave empty to use whatever duration Meet is already showing.",
+                Text = "Duration and alarm are applied only when the timer is stopped. " +
+                       "Pressing Start on a paused timer just resumes it.",
                 AutoSize = true,
                 MaximumSize = new Size(260, 0),
                 ForeColor = Color.Gray,
-                Margin = new Padding(0, 2, 0, 0)
+                Margin = new Padding(0, 8, 0, 0)
             };
 
             var layout = new FlowLayoutPanel
@@ -75,6 +90,8 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             layout.Controls.Add(_command);
             layout.Controls.Add(_durationLabel);
             layout.Controls.Add(_duration);
+            layout.Controls.Add(_alarmLabel);
+            layout.Controls.Add(_alarm);
             layout.Controls.Add(_hint);
             Controls.Add(layout);
 
@@ -88,17 +105,22 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
                 }
 
                 _duration.Text = config.Duration ?? string.Empty;
+                _alarm.SelectedIndex = (int)config.Alarm;
             }
 
             UpdateDurationVisibility();
         }
 
-        /// <summary>The duration only means anything to Start, so it is hidden for the rest.</summary>
+        /// <summary>
+        /// Duration and alarm only mean anything to Start, so they are hidden for the rest.
+        /// </summary>
         private void UpdateDurationVisibility()
         {
             var isStart = _command.SelectedItem?.ToString() == nameof(TimerCommand.Start);
             _durationLabel.Visible = isStart;
             _duration.Visible = isStart;
+            _alarmLabel.Visible = isStart;
+            _alarm.Visible = isStart;
             _hint.Visible = isStart;
         }
 
@@ -121,16 +143,29 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
                 return false;
             }
 
+            var alarm = (TimerAlarm)Math.Max(0, _alarm.SelectedIndex);
+
             _action.Configuration = JsonConvert.SerializeObject(new Settings
             {
                 Command = command,
                 Duration = duration,
+                Alarm = alarm,
             });
 
-            _action.ConfigurationSummary = command == TimerCommand.Start && duration.Length > 0
-                ? $"{command} ({duration})"
-                : command.ToString();
+            var summary = command.ToString();
+            if (command == TimerCommand.Start)
+            {
+                if (duration.Length > 0)
+                {
+                    summary += $" {duration}";
+                }
+                if (alarm != TimerAlarm.LeaveAsIs)
+                {
+                    summary += $", alarm {alarm.ToString().ToLowerInvariant()}";
+                }
+            }
 
+            _action.ConfigurationSummary = summary;
             return true;
         }
 
