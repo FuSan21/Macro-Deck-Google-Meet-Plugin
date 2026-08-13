@@ -30,29 +30,54 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
         /// <summary>Wrap width for the descriptions and the closing note.</summary>
         private const int RowWidth = 580;
 
-        /// <summary>
-        /// Wide enough for the longest row Meet has ("Allow third-party apps to collect
-        /// audio and video"), plus the four-space indent the nested ones carry.
-        /// </summary>
-        private const int LabelWidth = 400;
+        /// <summary>The column the labels live in. They wrap inside it rather than clip.</summary>
+        private const int LabelWidth = 340;
 
         private const int ChoiceWidth = 120;
 
+        /// <summary>How far a nested row sits in from its parent.</summary>
+        private const int IndentWidth = 20;
+
         /// <summary>
-        /// Rows are built with <see cref="Label.UseMnemonic"/> off. Meet has several
-        /// settings with "Q&amp;A" in the name, and a WinForms label eats an ampersand as an
-        /// accelerator prefix — so left on, "Allow questions in Q&amp;A" renders as
-        /// "Allow questions in QA".
+        /// A row label.
+        ///
+        /// <see cref="Label.AutoSize"/> is on with only a <see cref="Control.MaximumSize"/>
+        /// width, which is what lets the text wrap and the row grow taller instead of the
+        /// text being cut off. A fixed <see cref="Control.Size"/> would keep the dropdowns
+        /// in a tidy column at the cost of truncating half of Meet's setting names, which
+        /// is the wrong way round — the grid the row is built on keeps them aligned anyway.
+        ///
+        /// <see cref="Label.UseMnemonic"/> is off because a WinForms label eats an
+        /// ampersand as an accelerator prefix, and four of Meet's settings have "Q&amp;A" in
+        /// the name — left on, "Allow questions in Q&amp;A" renders as "Allow questions in QA".
         /// </summary>
-        private static Label RowLabel(string text) => new Label
+        private static Label RowLabel(string text, bool indented) => new Label
         {
             Text = text,
             UseMnemonic = false,
-            AutoSize = false,
-            Size = new Size(LabelWidth, 22),
-            TextAlign = ContentAlignment.MiddleLeft,
-            Margin = new Padding(0, 0, 8, 0)
+            AutoSize = true,
+            MaximumSize = new Size(LabelWidth - (indented ? IndentWidth : 0), 0),
+            Margin = new Padding(indented ? IndentWidth : 0, 3, 8, 0)
         };
+
+        /// <summary>
+        /// One setting: a label that wraps, and its dropdown. Built on a two-column grid so
+        /// the dropdowns stay in line however many lines the label takes.
+        /// </summary>
+        private static TableLayoutPanel RowShell()
+        {
+            var row = new TableLayoutPanel
+            {
+                ColumnCount = 2,
+                RowCount = 1,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0, 2, 0, 0)
+            };
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, LabelWidth));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            return row;
+        }
 
         private readonly PluginAction _action;
         private readonly Dictionary<HostControl, RoundedComboBox> _rows =
@@ -84,8 +109,8 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             Section(layout, "Let contributors");
             Row(layout, HostControl.LetContributorsShareScreen, "Share their screen", null);
             Row(layout, HostControl.LetContributorsSendReactions, "Send reactions", null);
-            Row(layout, HostControl.UseFullEmojiSet, "    Use the full set of emoji reactions",
-                "Nested under Send reactions.");
+            Row(layout, HostControl.UseFullEmojiSet, "Use the full set of emoji reactions",
+                null, indented: true);
             Row(layout, HostControl.LetContributorsUnmute, "Turn on their microphone",
                 "Turning this off can drop people on older clients.");
             Row(layout, HostControl.LetContributorsTurnOnVideo, "Turn on their video",
@@ -100,15 +125,17 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
 
             Section(layout, "Meeting access");
             _access = AccessRow(layout);
-            Row(layout, HostControl.AnyoneWithLinkCanAsk, "    Anyone with the link can ask to join",
-                "Nested under Trusted; ignored under the other two.");
+            Row(layout, HostControl.AnyoneWithLinkCanAsk, "Anyone with the link can ask to join",
+                "Applies under Trusted only.", indented: true);
 
             Section(layout, "Meeting activities");
             Row(layout, HostControl.AllowQuestions, "Allow questions in Q&A", null);
-            Row(layout, HostControl.HideQuestionsUntilApproved, "    Hide each question until a host approves", null);
-            Row(layout, HostControl.AllowAnonymousQuestions, "    Allow anonymous questions",
-                "Askers can hide their name, including from the host.");
-            Row(layout, HostControl.AllowQuestionsInLiveStream, "    Allow Q&A in live stream", null);
+            Row(layout, HostControl.HideQuestionsUntilApproved, "Hide each question until a host approves",
+                null, indented: true);
+            Row(layout, HostControl.AllowAnonymousQuestions, "Allow anonymous questions",
+                "Askers can hide their name, including from the host.", indented: true);
+            Row(layout, HostControl.AllowQuestionsInLiveStream, "Allow Q&A in live stream",
+                null, indented: true);
             Row(layout, HostControl.LetContributorsShareAddOns, "Let contributors share add-on activities",
                 "When off, only a host can start an activity.");
             Row(layout, HostControl.AllowThirdPartyCapture, "Allow third-party apps to collect audio and video", null);
@@ -157,18 +184,11 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             });
         }
 
-        private void Row(FlowLayoutPanel layout, HostControl control, string label, string description)
+        private void Row(FlowLayoutPanel layout, HostControl control, string label,
+            string description, bool indented = false)
         {
-            var row = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Margin = new Padding(0, 2, 0, 0)
-            };
-
-            row.Controls.Add(RowLabel(label));
+            var row = RowShell();
+            row.Controls.Add(RowLabel(label, indented), 0, 0);
 
             var choice = new RoundedComboBox
             {
@@ -177,7 +197,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             };
             choice.Items.AddRange(new object[] { "Leave as is", "On", "Off" });
             choice.SelectedIndex = 0;
-            row.Controls.Add(choice);
+            row.Controls.Add(choice, 1, 0);
 
             _rows[control] = choice;
             layout.Controls.Add(row);
@@ -189,25 +209,17 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
                     Text = description,
                     UseMnemonic = false,
                     AutoSize = true,
-                    MaximumSize = new Size(RowWidth, 0),
+                    MaximumSize = new Size(RowWidth - (indented ? IndentWidth : 0), 0),
                     ForeColor = Color.Gray,
-                    Margin = new Padding(0, 0, 0, 4)
+                    Margin = new Padding(indented ? IndentWidth : 0, 0, 0, 4)
                 });
             }
         }
 
         private RoundedComboBox AccessRow(FlowLayoutPanel layout)
         {
-            var row = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Margin = new Padding(0, 2, 0, 0)
-            };
-
-            row.Controls.Add(RowLabel("Meeting access type"));
+            var row = RowShell();
+            row.Controls.Add(RowLabel("Meeting access type", indented: false), 0, 0);
 
             var choice = new RoundedComboBox
             {
@@ -216,7 +228,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             };
             choice.Items.AddRange(new object[] { "Leave as is", "Open", "Trusted", "Restricted" });
             choice.SelectedIndex = 0;
-            row.Controls.Add(choice);
+            row.Controls.Add(choice, 1, 0);
             layout.Controls.Add(row);
 
             layout.Controls.Add(new Label
