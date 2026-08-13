@@ -139,6 +139,27 @@ class HostControlsEventHandler extends SDEventHandler {
     return pressed !== null ? pressed === "true" : element.checked === true;
   }
 
+  /**
+   * Answers the confirmation some rows raise, if one appeared.
+   *
+   * Turning Ask Gemini off opens "Stop Ask Gemini for everyone" — turning it back on does
+   * not — and the row flips its `aria-checked` optimistically the moment it is clicked, so
+   * the panel looks changed while nothing has actually been committed.
+   *
+   * Answering it is not optional politeness: the dialog is modal, so leaving it open would
+   * block every later row in the same configuration. That made a whole saved config stop
+   * dead at the first setting that asks.
+   *
+   * The confirm button is found the same way as everywhere else — the dialog button whose
+   * action is not "cancel" — which needs no visible text and so survives translation.
+   */
+  static _confirmIfAsked = async () => {
+    if (!MeetingToolsEventHandler.confirmDialog()) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  }
+
   _set = async (controlName, wanted) => {
     const control = HostControlsEventHandler.Controls[controlName];
     if (!control) {
@@ -162,7 +183,8 @@ class HostControlsEventHandler extends SDEventHandler {
     }
 
     target.click();
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await HostControlsEventHandler._confirmIfAsked();
   }
 
   /**
@@ -247,7 +269,8 @@ class HostControlsEventHandler extends SDEventHandler {
     }
 
     target.click();
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await HostControlsEventHandler._confirmIfAsked();
   }
 
 }
