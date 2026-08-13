@@ -37,7 +37,10 @@ class MeetingToolsEventHandler extends SDEventHandler {
    * own, so unlike the cards they can only be addressed by jsname.
    */
   static Tools = {
-    speechTranslation: { icon: "translate_spark", jsname: "CytQbf", primary: '[jsname="ZU5GHf"]' },
+    speechTranslation: {
+      icon: "translate_spark", jsname: "CytQbf",
+      primary: '[jsname="ZU5GHf"]', off: '[jsname="OUK46e"]',
+    },
     record: { icon: "radio_button_checked", jsname: "USEHud", primary: '[jsname="A0ONe"]' },
     transcribe: {
       icon: "speech_to_text", jsname: "gtwlKb",
@@ -49,6 +52,23 @@ class MeetingToolsEventHandler extends SDEventHandler {
     timer: { icon: "timer", jsname: "Ex2Bmd", primary: '[jsname="SPCnpb"]' },
     liveStreaming: { icon: "youtube_live", jsname: "iUug8e", primary: null },
   };
+
+  /**
+   * The buttons inside the Breakout rooms editor, and the three checkboxes Meet offers
+   * before a recording starts. The checkboxes carry Google's generic input jsname, so
+   * they are addressed by their order within the Recording panel — which is fixed, and
+   * unlike their labels does not change with the display language.
+   */
+  static BreakoutActions = {
+    setUp: '[jsname="jjbqZd"]',
+    openRooms: '[jsname="vGYErf"]',
+    shuffle: '[jsname="ZvBrEb"]',
+    clear: '[jsname="uL0KOe"]',
+    cancelChanges: '[jsname="TLo5Gb"]',
+    roomTimer: '[jsname="bOBs5e"]',
+  };
+
+  static RecordingOptionOrder = ["includeCaptions", "alsoTranscribe", "alsoGeminiNotes"];
 
   static CardSelector = '[jsname="lTgCnb"]';
 
@@ -71,7 +91,40 @@ class MeetingToolsEventHandler extends SDEventHandler {
       case "startMeetingTool":
         this._startTool(message.tool);
         break;
+      case "breakoutAction":
+        this._breakout(message.action);
+        break;
+      case "recordingOption":
+        this._recordingOption(message.option);
+        break;
     }
+  }
+
+  /**
+   * Answers whichever confirmation Meet is showing.
+   *
+   * Recording, transcription and turning translation off each open a dialog, and they do
+   * not agree on the confirm button's action token — recording and transcription use
+   * "A9Emjd", translation uses plain "ok". What they do agree on is that cancelling is
+   * always "cancel", so the confirm button is defined as the one that is not it. That
+   * holds whatever Google names the next one, and needs no visible text, so it works in
+   * any language.
+   */
+  static confirmDialog = () => {
+    const dialog = [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')]
+      .find((d) => d.getClientRects().length);
+    if (!dialog) {
+      return false;
+    }
+
+    const confirm = [...dialog.querySelectorAll("[data-mdc-dialog-action]")]
+      .find((b) => b.getAttribute("data-mdc-dialog-action") !== "cancel");
+    if (!confirm) {
+      return false;
+    }
+
+    confirm.click();
+    return true;
   }
 
   _togglePanel = (panelId) => {
@@ -108,11 +161,12 @@ class MeetingToolsEventHandler extends SDEventHandler {
     return document.querySelector(`[jsname="${tool.jsname}"]`)?.closest(MeetingToolsEventHandler.CardSelector) ?? null;
   }
 
+  /** Returns whether the tool's card was reached and pressed. */
   _openTool = async (toolName) => {
     const tool = MeetingToolsEventHandler.Tools[toolName];
     if (!tool) {
       console.error("Unknown meeting tool requested:", toolName);
-      return;
+      return false;
     }
 
     if (!await this._ensureToolsPanel()) {
@@ -127,15 +181,16 @@ class MeetingToolsEventHandler extends SDEventHandler {
         `The "${toolName}" tool is not available in this meeting. Cards currently offered:`,
         [...document.querySelectorAll(MeetingToolsEventHandler.CardSelector)]
           .map((c) => c.querySelector("i")?.textContent.trim()));
-      return;
+      return false;
     }
 
     if (card.querySelector('[aria-disabled="true"]')) {
       console.error(`The "${toolName}" tool is present but disabled — it likely needs a paid Workspace plan.`);
-      return;
+      return false;
     }
 
     card.querySelector('[role="button"]')?.click();
+    return true;
   }
 
   /**
@@ -151,9 +206,24 @@ class MeetingToolsEventHandler extends SDEventHandler {
    * only thing left is the part that genuinely needs a human.
    */
   _startTool = async (toolName) => {
+    // A dialog on screen means the previous press opened it, so this press answers it.
+    // Recording and transcription both warn that doing either without everyone's consent
+    // may be illegal; that warning should be dismissed by a deliberate second press, not
+    // swallowed by the first — the same two-press shape Leave Call already uses.
+    if (MeetingToolsEventHandler.confirmDialog()) {
+      return;
+    }
+
     const tool = MeetingToolsEventHandler.Tools[toolName];
     if (!tool) {
       console.error("Unknown meeting tool requested:", toolName);
+      return;
+    }
+
+    // Speech translation is the one tool whose off switch is a different button from its
+    // on switch, so the off one is preferred whenever it is on screen.
+    if (tool.off && document.querySelector(tool.off)) {
+      document.querySelector(tool.off).click();
       return;
     }
 
@@ -194,6 +264,66 @@ class MeetingToolsEventHandler extends SDEventHandler {
     }
 
     document.querySelector(tool.primary).click();
+  }
+
+  /**
+   * Drives the Breakout rooms editor. Everything except "set up" only exists once the
+   * editor is open, so it is opened first when it is not already showing.
+   */
+  _breakout = async (actionName) => {
+    const selector = MeetingToolsEventHandler.BreakoutActions[actionName];
+    if (!selector) {
+      console.error("Unknown breakout action requested:", actionName);
+      return;
+    }
+
+    if (!document.querySelector(selector)) {
+      await this._startTool("breakoutRooms");
+      if (!await MeetingToolsEventHandler.waitFor(() => document.querySelector(selector))) {
+        console.error(`Could not reach the breakout rooms editor to ${actionName}.`);
+        return;
+      }
+    }
+
+    document.querySelector(selector).click();
+  }
+
+  /**
+   * Ticks or unticks one of the three options Meet offers before a recording starts:
+   * include captions, also start a transcript, also start Take Notes with Gemini. They
+   * are only settable while the Recording panel is open and the recording has not begun.
+   */
+  _recordingOption = async (optionName) => {
+    const index = MeetingToolsEventHandler.RecordingOptionOrder.indexOf(optionName);
+    if (index < 0) {
+      console.error("Unknown recording option requested:", optionName);
+      return;
+    }
+
+    if (!document.querySelector(MeetingToolsEventHandler.Tools.record.primary)) {
+      if (!await this._openTool("record")) {
+        return;
+      }
+      if (!await MeetingToolsEventHandler.waitFor(
+        () => document.querySelector(MeetingToolsEventHandler.Tools.record.primary))) {
+        console.error("Could not open the recording panel to set its options.");
+        return;
+      }
+    }
+
+    const panel = document.querySelector(MeetingToolsEventHandler.Tools.record.primary)
+      ?.closest("div[class]")?.parentElement ?? document;
+    const boxes = [...panel.querySelectorAll('input[type="checkbox"]')]
+      .filter((b) => b.getClientRects().length);
+
+    if (boxes.length <= index) {
+      console.error(
+        `Expected at least ${index + 1} recording options but found ${boxes.length}. ` +
+        "Meet may have changed the panel, or the recording has already started.");
+      return;
+    }
+
+    boxes[index].click();
   }
 
   /**

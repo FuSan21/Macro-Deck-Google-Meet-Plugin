@@ -77,6 +77,8 @@ bind it to the button's state, so the key lights up to match Meet without any ex
 | Toggle Presenting | | `meet_is_presenting` | ✅ |
 | Open Meeting Tool | which tool | | ✅ |
 | Start Meeting Tool | which tool | | ✅ |
+| Recording Option | captions / transcript / Gemini | | ✅ |
+| Breakout Rooms | set up, shuffle, clear, open… | | ✅ |
 | Timer | start/pause, cancel, +1 min, alarm | | ✅ |
 | Toggle Host Control | which switch | | ✅ |
 | Toggle Meeting Tools | | | ✅ |
@@ -121,9 +123,33 @@ each then presents a sub-panel where the actual work happens. Two actions cover 
   | Speech translation | Enable translation for everyone |
   | Timer | start, or pause a running timer |
 
-  What happens after the press is Meet's business — a poll opens a composer, a recording may
-  ask for consent. This gets you to the point where the only thing left genuinely needs a
-  human. Live streaming has no single button, so it is Open-only.
+  Live streaming has no single button, so it is Open-only.
+
+#### Recording and transcription take two presses
+
+Both warn that doing it without everyone's consent may be illegal, and Meet will not start
+until that dialog is answered. So the first press opens the panel and presses Start; the
+second answers the dialog — the same shape Leave Call already uses, and the consent gate
+stays a deliberate act rather than something a single key press slips past.
+
+Stopping works identically, dialog and all. The Start/Stop control is the same button, so one
+button bound to *Start Meeting Tool → Record* both starts and stops.
+
+**Recording Option** ticks the three boxes Meet offers before a recording begins: include
+captions, also start a transcript, also start Take Notes with Gemini. Worth knowing that the
+Gemini one is **on by default** — an untouched recording also produces a notes document. Bind
+these ahead of the Record button to get a repeatable setup.
+
+#### What still needs a human
+
+A poll needs its question and options typed. A Q&A question needs writing. Breakout rooms
+need people assigned — though **Shuffle** does that at random, so *Breakout Rooms → Shuffle*
+followed by *Breakout Rooms → Open rooms* runs the whole thing from two keys. Setting a timer
+duration is two text fields.
+
+Speech translation is a true toggle, but its off switch is a different button from its on
+switch, and turning it off asks for confirmation too. It also prompts every participant to
+choose their language.
 
 **Timer** reaches two levels deep on its own, so start/pause, cancel, +1 minute and the alarm
 toggle all work from anywhere in the call. Setting the duration is still typing — that is two

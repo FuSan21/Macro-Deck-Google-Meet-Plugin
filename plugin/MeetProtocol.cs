@@ -97,6 +97,63 @@ namespace FuSan21.MacroDeck.GoogleMeet
 
             /// <summary>Fork only.</summary>
             public const string TimerToggleAlarm = "timerToggleAlarm";
+
+            /// <summary>Fork only. Carries an <c>action</c> field; see <see cref="BreakoutActionNames"/>.</summary>
+            public const string BreakoutAction = "breakoutAction";
+
+            /// <summary>Fork only. Carries an <c>option</c> field; see <see cref="RecordingOptionNames"/>.</summary>
+            public const string RecordingOption = "recordingOption";
+        }
+    }
+
+    /// <summary>The buttons in Meet's Breakout rooms editor.</summary>
+    public enum BreakoutAction
+    {
+        SetUp,
+        OpenRooms,
+        Shuffle,
+        Clear,
+        CancelChanges,
+        RoomTimer,
+    }
+
+    internal static class BreakoutActionNames
+    {
+        public static string For(BreakoutAction action)
+        {
+            switch (action)
+            {
+                case BreakoutAction.OpenRooms: return "openRooms";
+                case BreakoutAction.Shuffle: return "shuffle";
+                case BreakoutAction.Clear: return "clear";
+                case BreakoutAction.CancelChanges: return "cancelChanges";
+                case BreakoutAction.RoomTimer: return "roomTimer";
+                default: return "setUp";
+            }
+        }
+    }
+
+    /// <summary>
+    /// The three tick-boxes Meet offers on the Recording panel before a recording starts.
+    /// Take Notes with Gemini is ticked by default; the other two are not.
+    /// </summary>
+    public enum RecordingOption
+    {
+        IncludeCaptions,
+        AlsoTranscribe,
+        AlsoTakeNotesWithGemini,
+    }
+
+    internal static class RecordingOptionNames
+    {
+        public static string For(RecordingOption option)
+        {
+            switch (option)
+            {
+                case RecordingOption.AlsoTranscribe: return "alsoTranscribe";
+                case RecordingOption.AlsoTakeNotesWithGemini: return "alsoGeminiNotes";
+                default: return "includeCaptions";
+            }
         }
     }
 
