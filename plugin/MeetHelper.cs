@@ -30,8 +30,9 @@ namespace FuSan21.MacroDeck.GoogleMeet
         public static string LastError => _server.LastError;
 
         /// <summary>
-        /// The version of the browser extension actually running, as it reported itself on
-        /// connecting. Null until a tab says.
+        /// The version of the browser extension, as the last tab to connect reported it.
+        /// Null until one does, and kept afterwards — it says what is installed, not what
+        /// is currently connected, so a tab closing does not make it untrue.
         /// </summary>
         public static string ExtensionVersion { get; private set; }
 
@@ -68,8 +69,6 @@ namespace FuSan21.MacroDeck.GoogleMeet
                 previous = _state;
                 _state = MeetState.Empty;
             }
-
-            ExtensionVersion = null;
 
             PluginInstance.Plugin?.ApplyState(previous, MeetState.Empty);
         }
