@@ -1,0 +1,11 @@
+{
+  "type": "Plugin",
+  "name": "Google Meet Plugin",
+  "author": "FuSan21",
+  "repository": "https://github.com/FuSan21/Macro-Deck-Google-Meet-Plugin",
+  "packageId": "FuSan21.GoogleMeetPlugin",
+  "version": "1.0.0",
+  "target-plugin-api-version": 41,
+  "target-macro-deck-version": "2.15.0",
+  "dll": "Google Meet Plugin.dll"
+}
