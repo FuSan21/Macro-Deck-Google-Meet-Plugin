@@ -67,6 +67,88 @@ namespace FuSan21.MacroDeck.GoogleMeet
 
             /// <summary>Fork only.</summary>
             public const string GetMeetingState = "getMeetingState";
+
+            /// <summary>Fork only. Carries a <c>tool</c> field; see <see cref="MeetingToolNames"/>.</summary>
+            public const string OpenMeetingTool = "openMeetingTool";
+
+            /// <summary>Fork only.</summary>
+            public const string ToggleMeetingTools = "toggleMeetingTools";
+
+            /// <summary>Fork only.</summary>
+            public const string ToggleHostControls = "toggleHostControls";
+
+            /// <summary>Fork only.</summary>
+            public const string ToggleMeetingDetails = "toggleMeetingDetails";
+
+            /// <summary>Fork only.</summary>
+            public const string ToggleTranscription = "toggleTranscription";
+
+            /// <summary>Fork only.</summary>
+            public const string TimerStartPause = "timerStartPause";
+
+            /// <summary>Fork only.</summary>
+            public const string TimerCancel = "timerCancel";
+
+            /// <summary>Fork only.</summary>
+            public const string TimerAddMinute = "timerAddMinute";
+        }
+    }
+
+    /// <summary>
+    /// The cards in Meet's "Meeting tools" side panel. Which of them a given meeting
+    /// offers depends on the host's Workspace plan and on whether you are the host, so
+    /// the extension reports a miss to the browser console rather than the plugin
+    /// pretending a tool exists everywhere.
+    /// </summary>
+    public enum MeetingTool
+    {
+        Record,
+        Transcribe,
+        Polls,
+        QuestionsAndAnswers,
+        BreakoutRooms,
+        SpeechTranslation,
+        Timer,
+        LiveStreaming,
+    }
+
+    internal static class MeetingToolNames
+    {
+        /// <summary>Maps to the keys of <c>MeetingToolsEventHandler.Tools</c> in the extension.</summary>
+        public static string For(MeetingTool tool)
+        {
+            switch (tool)
+            {
+                case MeetingTool.Transcribe: return "transcribe";
+                case MeetingTool.Polls: return "polls";
+                case MeetingTool.QuestionsAndAnswers: return "questions";
+                case MeetingTool.BreakoutRooms: return "breakoutRooms";
+                case MeetingTool.SpeechTranslation: return "speechTranslation";
+                case MeetingTool.Timer: return "timer";
+                case MeetingTool.LiveStreaming: return "liveStreaming";
+                default: return "record";
+            }
+        }
+    }
+
+    /// <summary>What a Timer button press should do.</summary>
+    public enum TimerCommand
+    {
+        StartOrPause,
+        Cancel,
+        AddOneMinute,
+    }
+
+    internal static class TimerCommands
+    {
+        public static string For(TimerCommand command)
+        {
+            switch (command)
+            {
+                case TimerCommand.Cancel: return MeetProtocol.Outbound.TimerCancel;
+                case TimerCommand.AddOneMinute: return MeetProtocol.Outbound.TimerAddMinute;
+                default: return MeetProtocol.Outbound.TimerStartPause;
+            }
         }
     }
 

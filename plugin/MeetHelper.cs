@@ -87,6 +87,18 @@ namespace FuSan21.MacroDeck.GoogleMeet
             return Send(message, description);
         }
 
+        /// <summary>Opens one card in Meet's "Meeting tools" side panel.</summary>
+        public static bool SendMeetingTool(MeetingTool tool, string description)
+        {
+            var message = new JObject
+            {
+                ["event"] = MeetProtocol.Outbound.OpenMeetingTool,
+                ["tool"] = MeetingToolNames.For(tool),
+            };
+
+            return Send(message, description);
+        }
+
         private static bool Send(JObject message, string description)
         {
             if (!_server.IsRunning)

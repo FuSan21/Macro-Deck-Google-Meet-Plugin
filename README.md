@@ -75,6 +75,12 @@ bind it to the button's state, so the key lights up to match Meet without any ex
 | Toggle Zen Mode | | | |
 | Send Reaction | which emoji | | |
 | Toggle Presenting | | `meet_is_presenting` | ✅ |
+| Open Meeting Tool | which tool | | ✅ |
+| Toggle Transcription | | | ✅ |
+| Timer | start/pause, cancel, +1 min | | ✅ |
+| Toggle Meeting Tools | | | ✅ |
+| Toggle Host Controls | | | ✅ |
+| Toggle Meeting Details | | | ✅ |
 | Leave Call | | `meet_in_meeting` | |
 | Open Google Meet | | | no extension at all |
 
@@ -94,6 +100,28 @@ feature, and it is [borrowed from google-meet-true-full-screen][zen] via upstrea
 
 **Open Google Meet** opens the landing page in your default browser and is the one action that
 does not need the extension — there is no call to talk to yet, which is rather the point.
+
+### Meeting tools
+
+Record, Transcribe, Polls, Q&A, Breakout rooms, Speech translation, Timer and Live streaming
+are not toolbar buttons. They are cards inside a side panel that has to be opened first, and
+most of them then present a sub-panel where the actual work happens. So:
+
+- **Open Meeting Tool** gets you *to* any of the eight in one press. It does not stand in for
+  the tool — Polls still needs you to write the poll.
+- **Toggle Transcription** is a real one-press start/stop, because Transcribe is the one tool
+  whose control sits on the card itself rather than behind a sub-panel.
+- **Timer** reaches two levels deep on its own, so start/pause, cancel and +1 minute work from
+  anywhere in the call. Setting the duration is still typing — that is two text fields, not a
+  button.
+
+Which cards a meeting offers depends on the host's Workspace plan and on whether you are the
+host; a personal account sees only Speech translation and Timer. Asking for a tool that is not
+on offer logs the miss to the browser console along with the cards that *were* there, and
+presses nothing.
+
+Recording has no single-press action. Meet puts Record's start behind its sub-panel with a
+confirmation, so **Open Meeting Tool → Record** is as far as one key goes.
 
 [zen]: https://github.com/verlok/google-meet-true-full-screen
 

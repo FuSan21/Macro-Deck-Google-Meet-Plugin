@@ -30,6 +30,8 @@
         "event_handlers/zen_mode_event_handler.js",
         "event_handlers/meeting_state_event_handler.js",
         "event_handlers/present_event_handler.js",
+        "event_handlers/meeting_tools_event_handler.js",
+        "event_handlers/timer_event_handler.js",
         "stream_deck_connection_manager.js",
         "errors.js",
         "main.js"

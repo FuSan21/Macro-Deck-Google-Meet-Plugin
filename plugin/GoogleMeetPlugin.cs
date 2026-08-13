@@ -66,6 +66,12 @@ namespace FuSan21.MacroDeck.GoogleMeet
                     new TogglePinPresentationAction(),
                     new ToggleZenModeAction(),
                     new SendReactionAction(),
+                    new OpenMeetingToolAction(),
+                    new ToggleTranscriptionAction(),
+                    new TimerAction(),
+                    new ToggleMeetingToolsAction(),
+                    new ToggleHostControlsAction(),
+                    new ToggleMeetingDetailsAction(),
                     new LeaveCallAction(),
                     new OpenMeetAction(),
                 };

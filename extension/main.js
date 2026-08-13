@@ -25,6 +25,8 @@ const eventHandlers = [
   new ZenModeEventHandler(connectionManager),
   new MeetingStateEventHandler(connectionManager),
   new PresentEventHandler(connectionManager),
+  new MeetingToolsEventHandler(connectionManager),
+  new TimerEventHandler(connectionManager),
 ];
 
 connectionManager.initialize();
