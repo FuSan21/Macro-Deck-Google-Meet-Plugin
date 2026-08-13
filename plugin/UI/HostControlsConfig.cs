@@ -27,7 +27,32 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             public MeetingAccess? Access { get; set; }
         }
 
-        private const int RowWidth = 360;
+        /// <summary>Wrap width for the descriptions and the closing note.</summary>
+        private const int RowWidth = 580;
+
+        /// <summary>
+        /// Wide enough for the longest row Meet has ("Allow third-party apps to collect
+        /// audio and video"), plus the four-space indent the nested ones carry.
+        /// </summary>
+        private const int LabelWidth = 400;
+
+        private const int ChoiceWidth = 120;
+
+        /// <summary>
+        /// Rows are built with <see cref="Label.UseMnemonic"/> off. Meet has several
+        /// settings with "Q&amp;A" in the name, and a WinForms label eats an ampersand as an
+        /// accelerator prefix — so left on, "Allow questions in Q&amp;A" renders as
+        /// "Allow questions in QA".
+        /// </summary>
+        private static Label RowLabel(string text) => new Label
+        {
+            Text = text,
+            UseMnemonic = false,
+            AutoSize = false,
+            Size = new Size(LabelWidth, 22),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 0, 8, 0)
+        };
 
         private readonly PluginAction _action;
         private readonly Dictionary<HostControl, RoundedComboBox> _rows =
@@ -103,6 +128,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
         private static Control Intro(string text) => new Label
         {
             Text = text,
+            UseMnemonic = false,
             AutoSize = true,
             MaximumSize = new Size(RowWidth, 0),
             ForeColor = Color.Gray,
@@ -112,6 +138,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
         private static Label Hint(string text) => new Label
         {
             Text = text,
+            UseMnemonic = false,
             AutoSize = true,
             MaximumSize = new Size(RowWidth, 0),
             ForeColor = Color.Gray,
@@ -141,19 +168,12 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
                 Margin = new Padding(0, 2, 0, 0)
             };
 
-            row.Controls.Add(new Label
-            {
-                Text = label,
-                AutoSize = false,
-                Size = new Size(240, 22),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Margin = new Padding(0, 0, 8, 0)
-            });
+            row.Controls.Add(RowLabel(label));
 
             var choice = new RoundedComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Width = 110
+                Width = ChoiceWidth
             };
             choice.Items.AddRange(new object[] { "Leave as is", "On", "Off" });
             choice.SelectedIndex = 0;
@@ -167,6 +187,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
                 layout.Controls.Add(new Label
                 {
                     Text = description,
+                    UseMnemonic = false,
                     AutoSize = true,
                     MaximumSize = new Size(RowWidth, 0),
                     ForeColor = Color.Gray,
@@ -186,19 +207,12 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
                 Margin = new Padding(0, 2, 0, 0)
             };
 
-            row.Controls.Add(new Label
-            {
-                Text = "Meeting access type",
-                AutoSize = false,
-                Size = new Size(240, 22),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Margin = new Padding(0, 0, 8, 0)
-            });
+            row.Controls.Add(RowLabel("Meeting access type"));
 
             var choice = new RoundedComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Width = 110
+                Width = ChoiceWidth
             };
             choice.Items.AddRange(new object[] { "Leave as is", "Open", "Trusted", "Restricted" });
             choice.SelectedIndex = 0;
@@ -209,6 +223,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             {
                 Text = "Open: nobody asks. Trusted: your organisation joins directly, " +
                        "others ask. Restricted: invited Google Accounts only.",
+                UseMnemonic = false,
                 AutoSize = true,
                 MaximumSize = new Size(RowWidth, 0),
                 ForeColor = Color.Gray,

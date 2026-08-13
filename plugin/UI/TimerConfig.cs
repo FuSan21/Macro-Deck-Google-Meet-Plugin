@@ -56,8 +56,9 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
 
             _commandHint = new Label
             {
+                UseMnemonic = false,
                 AutoSize = true,
-                MaximumSize = new Size(260, 0),
+                MaximumSize = new Size(460, 0),
                 ForeColor = Color.Gray,
                 Margin = new Padding(0, 4, 0, 0)
             };
@@ -81,8 +82,9 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             _hint = new Label
             {
                 Text = "Applied only when the timer is stopped. Empty duration keeps Meet's.",
+                UseMnemonic = false,
                 AutoSize = true,
-                MaximumSize = new Size(260, 0),
+                MaximumSize = new Size(460, 0),
                 ForeColor = Color.Gray,
                 Margin = new Padding(0, 8, 0, 0)
             };
