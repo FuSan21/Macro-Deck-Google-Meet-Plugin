@@ -11,6 +11,10 @@ namespace FuSan21.MacroDeck.GoogleMeet.Actions
         public override string Description =>
             "Leave the Google Meet call. If Meet asks to confirm, press again to leave";
 
+        // Bound to the call itself rather than to a control, so the key can light up only
+        // while there is something to leave.
+        public override string BindableVariable { get; set; } = "meet_in_meeting";
+
         protected override string EventName => MeetProtocol.Outbound.LeaveCall;
     }
 }

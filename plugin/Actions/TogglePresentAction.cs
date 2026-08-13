@@ -16,6 +16,8 @@ namespace FuSan21.MacroDeck.GoogleMeet.Actions
         public override string Description =>
             "Open the screen-share picker, or stop presenting. Requires this repository's browser extension";
 
+        public override string BindableVariable { get; set; } = "meet_is_presenting";
+
         protected override string EventName => MeetProtocol.Outbound.TogglePresent;
     }
 }

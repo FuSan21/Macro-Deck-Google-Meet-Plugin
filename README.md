@@ -56,6 +56,9 @@ His extension cannot run alongside his own Stream Deck plugin, because both want
 
 ## Actions
 
+Actions that carry a bindable variable offer it when you add them: Macro Deck asks whether to
+bind it to the button's state, so the key lights up to match Meet without any extra setup.
+
 | Action | Configurable | Bindable variable | Needs this fork |
 |---|---|---|---|
 | Toggle Microphone | | `meet_is_muted` | |
@@ -72,7 +75,7 @@ His extension cannot run alongside his own Stream Deck plugin, because both want
 | Toggle Zen Mode | | | |
 | Send Reaction | which emoji | | |
 | Toggle Presenting | | `meet_is_presenting` | ✅ |
-| Leave Call | | | |
+| Leave Call | | `meet_in_meeting` | |
 | Open Google Meet | | | no extension at all |
 
 **Send Reaction** covers Meet's nine: Heart, Thumbs up, Celebrate, Clap, Joy, Surprised, Sad,
