@@ -80,8 +80,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
 
             _hint = new Label
             {
-                Text = "Both are applied only when the timer is stopped — Meet fixes them " +
-                       "once it starts. Leave the duration empty to use whatever Meet is showing.",
+                Text = "Applied only when the timer is stopped. Empty duration keeps Meet's.",
                 AutoSize = true,
                 MaximumSize = new Size(260, 0),
                 ForeColor = Color.Gray,
@@ -143,33 +142,19 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
         }
 
         /// <summary>
-        /// What each command does, and — as importantly — what it does when the timer is
-        /// not in the state you expect. Start and Pause deliberately do nothing rather than
-        /// doing the opposite, and that is worth saying where the choice is made rather
-        /// than leaving it to be discovered mid-meeting.
+        /// One line per command. The no-op halves are the part worth keeping: Start and
+        /// Pause deliberately do nothing rather than doing the opposite, which is not
+        /// guessable from the name.
         /// </summary>
         private static string Describe(TimerCommand command)
         {
             switch (command)
             {
-                case TimerCommand.Pause:
-                    return "Holds a running timer. Does nothing if it is already paused or " +
-                           "stopped, so this key never accidentally starts one.";
-
-                case TimerCommand.Stop:
-                    return "Clears the timer. It disappears for everyone, and the next Start " +
-                           "begins a fresh one.";
-
-                case TimerCommand.AddOneMinute:
-                    return "Adds a minute to the timer. Meet only offers this once a timer exists.";
-
-                case TimerCommand.ToggleAlarm:
-                    return "Flips whether the timer chimes when it runs out. This one has to " +
-                           "open the timer panel — Meet's top-bar controls do not include it.";
-
-                default:
-                    return "Starts a stopped timer, or resumes a paused one. Does nothing if it " +
-                           "is already running, so this key never accidentally pauses.";
+                case TimerCommand.Pause: return "Pauses. Does nothing if not running.";
+                case TimerCommand.Stop: return "Clears the timer for everyone.";
+                case TimerCommand.AddOneMinute: return "Adds a minute to a running timer.";
+                case TimerCommand.ToggleAlarm: return "Turns the end-of-timer chime on or off.";
+                default: return "Starts, or resumes a paused timer. Does nothing if already running.";
             }
         }
 
