@@ -37,6 +37,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
         private readonly RoundedComboBox _alarm;
         private readonly Label _durationLabel;
         private readonly Label _alarmLabel;
+        private readonly Label _commandHint;
         private readonly Label _hint;
 
         public TimerConfig(PluginAction action)
@@ -51,7 +52,15 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             };
             _command.Items.AddRange(Enum.GetNames(typeof(TimerCommand)));
             _command.SelectedIndex = 0;
-            _command.SelectedIndexChanged += (s, e) => UpdateDurationVisibility();
+            _command.SelectedIndexChanged += (s, e) => UpdateForCommand();
+
+            _commandHint = new Label
+            {
+                AutoSize = true,
+                MaximumSize = new Size(260, 0),
+                ForeColor = Color.Gray,
+                Margin = new Padding(0, 4, 0, 0)
+            };
 
             _durationLabel = new Label { Text = "Duration", AutoSize = true, Margin = new Padding(0, 10, 0, 3) };
             _duration = new RoundedTextBox
@@ -71,8 +80,8 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
 
             _hint = new Label
             {
-                Text = "Duration and alarm are applied only when the timer is stopped. " +
-                       "Pressing Start on a paused timer just resumes it.",
+                Text = "Both are applied only when the timer is stopped — Meet fixes them " +
+                       "once it starts. Leave the duration empty to use whatever Meet is showing.",
                 AutoSize = true,
                 MaximumSize = new Size(260, 0),
                 ForeColor = Color.Gray,
@@ -88,6 +97,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
             };
             layout.Controls.Add(new Label { Text = "Timer action", AutoSize = true });
             layout.Controls.Add(_command);
+            layout.Controls.Add(_commandHint);
             layout.Controls.Add(_durationLabel);
             layout.Controls.Add(_duration);
             layout.Controls.Add(_alarmLabel);
@@ -108,20 +118,59 @@ namespace FuSan21.MacroDeck.GoogleMeet.UI
                 _alarm.SelectedIndex = (int)config.Alarm;
             }
 
-            UpdateDurationVisibility();
+            UpdateForCommand();
         }
 
         /// <summary>
-        /// Duration and alarm only mean anything to Start, so they are hidden for the rest.
+        /// Explains the selected command, and shows the duration and alarm boxes only for
+        /// Start, which is the only command they mean anything to.
         /// </summary>
-        private void UpdateDurationVisibility()
+        private void UpdateForCommand()
         {
-            var isStart = _command.SelectedItem?.ToString() == nameof(TimerCommand.Start);
+            if (!Enum.TryParse<TimerCommand>(_command.SelectedItem?.ToString(), out var command))
+            {
+                command = TimerCommand.Start;
+            }
+
+            _commandHint.Text = Describe(command);
+
+            var isStart = command == TimerCommand.Start;
             _durationLabel.Visible = isStart;
             _duration.Visible = isStart;
             _alarmLabel.Visible = isStart;
             _alarm.Visible = isStart;
             _hint.Visible = isStart;
+        }
+
+        /// <summary>
+        /// What each command does, and — as importantly — what it does when the timer is
+        /// not in the state you expect. Start and Pause deliberately do nothing rather than
+        /// doing the opposite, and that is worth saying where the choice is made rather
+        /// than leaving it to be discovered mid-meeting.
+        /// </summary>
+        private static string Describe(TimerCommand command)
+        {
+            switch (command)
+            {
+                case TimerCommand.Pause:
+                    return "Holds a running timer. Does nothing if it is already paused or " +
+                           "stopped, so this key never accidentally starts one.";
+
+                case TimerCommand.Stop:
+                    return "Clears the timer. It disappears for everyone, and the next Start " +
+                           "begins a fresh one.";
+
+                case TimerCommand.AddOneMinute:
+                    return "Adds a minute to the timer. Meet only offers this once a timer exists.";
+
+                case TimerCommand.ToggleAlarm:
+                    return "Flips whether the timer chimes when it runs out. This one has to " +
+                           "open the timer panel — Meet's top-bar controls do not include it.";
+
+                default:
+                    return "Starts a stopped timer, or resumes a paused one. Does nothing if it " +
+                           "is already running, so this key never accidentally pauses.";
+            }
         }
 
         public override bool OnActionSave()
