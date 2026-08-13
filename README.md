@@ -185,18 +185,22 @@ silenced, the camera is off, the hand is down, captions are off and the presenta
 unpinned. The plugin flips the four whose natural reading is the other way round before
 publishing variables, so `meet_is_video_on` means what it says.
 
-## Not yet verified
+## When Meet changes its icons
 
-**Toggle Presenting and `meet_is_presenting`.** Which Material Symbols ligature Meet uses for
-its present control could not be confirmed without a live call, so both plausible names for each
-state are listed in `extension/event_handlers/present_event_handler.js`. If none matches, no
-button is found: the plugin is told nothing, `meet_is_presenting` stays false, and nothing wrong
-is clicked. To check, run this in the console of a Meet call and compare against those lists:
+Presenting is matched on the ligature `computer_arrow_up` for start and
+`cancel_presentation` / `stop_screen_share` for stop, confirmed against Meet in August 2026.
+If Google renames one, the handler finds no button: nothing is clicked and
+`meet_is_presenting` stops moving, rather than something wrong being pressed.
+
+To see what is actually on the page, run this in the console of a Meet call — it lists every
+ligature with the button it belongs to and whether that button is visible:
 
 ```js
-[...document.querySelectorAll("i.google-material-icons, i.google-symbols")]
-  .map(i => i.textContent.trim()).filter((v, k, a) => a.indexOf(v) === k)
+PresentEventHandler.diagnose()
 ```
+
+Add the new name to `StartIcons` or `StopIcons` in
+`extension/event_handlers/present_event_handler.js`, then reload the extension.
 
 ## Credits
 

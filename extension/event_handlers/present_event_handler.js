@@ -21,8 +21,14 @@
  */
 class PresentEventHandler extends SDEventHandler {
 
-  /** Ligatures shown while you are NOT presenting: pressing this starts a share. */
-  static StartIcons = ["present_to_all", "screen_share"];
+  /**
+   * Ligatures shown while you are NOT presenting: pressing this starts a share.
+   *
+   * `computer_arrow_up` is the one Meet actually renders as of August 2026, on
+   * `button[jsname="hNGZQc"]` (aria-label "Share screen"). The others are earlier names
+   * kept as a cushion — an unused entry costs one string comparison.
+   */
+  static StartIcons = ["computer_arrow_up", "present_to_all", "screen_share"];
 
   /** Ligatures shown while you ARE presenting: pressing this stops the share. */
   static StopIcons = ["cancel_presentation", "stop_screen_share", "present_to_all_off"];
@@ -60,18 +66,23 @@ class PresentEventHandler extends SDEventHandler {
    * which is the normal state before a call starts.
    */
   _findControl = () => {
-    const icons = document.querySelectorAll("i.google-material-icons, i.material-icons-extended, i.google-symbols");
+    const icons = document.querySelectorAll(PresentEventHandler.IconSelector);
     let start = null;
 
     for (const icon of icons) {
       const ligature = icon.textContent.trim();
       const button = icon.closest('button, [role="button"]');
-      if (!button) {
+
+      // Meet keeps closed menus in the DOM, so an icon existing proves nothing about
+      // whether its button is on screen. Skipping the ones with no layout box is what
+      // stops a stop-sharing entry parked in a collapsed overflow menu from being read
+      // as "already presenting" — which would swallow every attempt to start a share.
+      if (!button || !PresentEventHandler.IsVisible(button)) {
         continue;
       }
 
-      // A stop icon wins outright wherever it appears: it can only exist while a share
-      // is running, whereas a start icon may also be sitting in an overflow menu.
+      // Among visible controls a stop icon wins outright: it can only be rendered while
+      // a share is actually running.
       if (PresentEventHandler.StopIcons.includes(ligature)) {
         return { button: button, presenting: true };
       }
@@ -83,6 +94,36 @@ class PresentEventHandler extends SDEventHandler {
     return start;
   }
 
+  static IconSelector = "i.google-material-icons, i.material-icons-extended, i.google-symbols";
+
+  static IsVisible = (element) => {
+    if (element.getClientRects().length === 0) {
+      return false;
+    }
+    return getComputedStyle(element).visibility !== "hidden";
+  }
+
+  /**
+   * Dumps every ligature currently on the page and says which one, if any, this handler
+   * would act on. Meant to be called by hand from the console when presenting misbehaves:
+   *
+   *   PresentEventHandler.diagnose()
+   */
+  static diagnose = () => {
+    const rows = [];
+    for (const icon of document.querySelectorAll(PresentEventHandler.IconSelector)) {
+      const button = icon.closest('button, [role="button"]');
+      rows.push({
+        ligature: icon.textContent.trim(),
+        visible: button ? PresentEventHandler.IsVisible(button) : false,
+        jsname: button?.getAttribute("jsname") ?? "",
+        label: button?.getAttribute("aria-label") ?? "",
+      });
+    }
+    console.table(rows);
+    return rows;
+  }
+
   /**
    * Note that starting a share cannot finish here. Chrome will not hand a page a screen
    * without the user picking one in its own picker, so all this can do is open that
@@ -91,6 +132,12 @@ class PresentEventHandler extends SDEventHandler {
   _togglePresent = () => {
     const control = this._findControl();
     if (!control) {
+      // Say which ligatures were actually on the page, so the miss can be diagnosed from
+      // the console without adding logging first.
+      console.error(
+        "No presenting button found in the Meet UI. Run PresentEventHandler.diagnose() " +
+        "to see every icon on the page, and compare against StartIcons/StopIcons."
+      );
       throw new ControlsNotFoundError("No presenting button found in the Meet UI!");
     }
 
