@@ -108,15 +108,29 @@ namespace FuSan21.MacroDeck.GoogleMeet
     }
 
     /// <summary>
-    /// The breakout-room buttons worth a key. Opening the editor is left to
-    /// <see cref="MeetingTool.BreakoutRooms"/>, and the form's own Cancel and timer
-    /// controls are mouse work — you are looking at the form when you use them.
+    /// Everything Meet's breakout rooms offer.
+    ///
+    /// They live in two places and the extension navigates to whichever one is needed:
+    /// the panel lists the rooms and holds <see cref="CloseRooms"/> and
+    /// <see cref="JoinRoom"/>, while the editor behind "Set up"/"Edit rooms" holds the
+    /// room count, <see cref="Shuffle"/>, <see cref="Clear"/>, <see cref="SetTimer"/> and
+    /// <see cref="OpenRooms"/>.
+    ///
+    /// Several only exist in one state — Open and Close are opposites, and
+    /// <see cref="ReturnToMainCall"/> only while you are inside a room — so asking for the
+    /// wrong one is reported rather than pressed.
     /// </summary>
     public enum BreakoutAction
     {
         Shuffle,
         OpenRooms,
+        CloseRooms,
+        JoinRoom,
+        ReturnToMainCall,
+        SetTimer,
         Clear,
+        EditRooms,
+        CancelChanges,
     }
 
     internal static class BreakoutActionNames
@@ -126,7 +140,13 @@ namespace FuSan21.MacroDeck.GoogleMeet
             switch (action)
             {
                 case BreakoutAction.OpenRooms: return "openRooms";
+                case BreakoutAction.CloseRooms: return "closeRooms";
+                case BreakoutAction.JoinRoom: return "joinRoom";
+                case BreakoutAction.ReturnToMainCall: return "returnToMainCall";
+                case BreakoutAction.SetTimer: return "setTimer";
                 case BreakoutAction.Clear: return "clear";
+                case BreakoutAction.EditRooms: return "edit";
+                case BreakoutAction.CancelChanges: return "cancelChanges";
                 default: return "shuffle";
             }
         }

@@ -77,7 +77,7 @@ bind it to the button's state, so the key lights up to match Meet without any ex
 | Toggle Presenting | | `meet_is_presenting` | ✅ |
 | Open Meeting Tool | which tool | | ✅ |
 | Start Meeting Tool | which tool | | ✅ |
-| Breakout Rooms | shuffle, open rooms, clear | | ✅ |
+| Breakout Rooms | shuffle, open/close, join, timer… | | ✅ |
 | Timer | start, pause, stop, +1 min, alarm | | ✅ |
 | Toggle Host Control | which switch | | ✅ |
 | Leave Call | | `meet_in_meeting` | |
@@ -137,12 +137,36 @@ default** — so an untouched recording produces a Gemini notes document as well
 Those are settings rather than actions, so they are not bound to keys; set them once in the
 panel.
 
+### Breakout rooms
+
+The controls sit in two places — the room list, and the editor behind "Set up"/"Edit rooms" —
+and the action navigates to whichever one the chosen command needs:
+
+| | Where | Notes |
+|---|---|---|
+| Shuffle | editor | assigns everyone at random; greyed out if you are alone |
+| Clear | editor | empties the assignments |
+| Open rooms | editor | moves everyone in |
+| Close rooms | room list | asks first, so press again to confirm |
+| Join room *n* | room list | the tab moves to that room's own call |
+| Return to main call | inside a room | |
+| Set timer | editor | minutes before everyone is returned; 0 clears it |
+| Edit rooms / Cancel changes | either | |
+
+**Shuffle** then **Open rooms** runs the whole feature from two keys. Assigning specific people
+to specific rooms is drag-and-drop and stays a mouse job.
+
+Several commands only exist in one state — Open and Close are opposites, Return only while you
+are in a room — and asking for one that is not available is reported to the browser console
+rather than pressed.
+
+Joining a room **navigates the tab to that room's own meeting**, so the extension reloads and
+the socket reconnects a moment later. That is Meet's design, not a fault.
+
 #### What still needs a human
 
-A poll needs its question and options typed. A Q&A question needs writing. Breakout rooms
-need people assigned — though **Shuffle** does that at random, so *Breakout Rooms → Shuffle*
-followed by *Breakout Rooms → Open rooms* runs the whole thing from two keys. Setting a timer
-duration is two text fields.
+A poll needs its question and options typed. A Q&A question needs writing. Setting the main
+timer's duration is two text fields.
 
 Speech translation is a true toggle, but its off switch is a different button from its on
 switch, and turning it off asks for confirmation too. It also prompts every participant to

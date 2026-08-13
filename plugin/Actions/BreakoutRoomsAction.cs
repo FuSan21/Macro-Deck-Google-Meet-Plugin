@@ -8,15 +8,21 @@ using System;
 namespace FuSan21.MacroDeck.GoogleMeet.Actions
 {
     /// <summary>
-    /// Shuffles everyone into rooms at random, clears those assignments again, or opens
-    /// the rooms. <b>Open rooms</b> is the one that actually moves people.
+    /// Everything Meet's breakout rooms offer: shuffle people into them, open and close
+    /// them, join one yourself, come back, and set the countdown that ends them.
     ///
-    /// Assigning specific people to specific rooms is drag-and-drop and stays a mouse job —
+    /// The controls live in two places — the room list, and the editor behind
+    /// "Set up"/"Edit rooms" — and this navigates to whichever the chosen command needs, so
+    /// a key works from anywhere in the call.
+    ///
+    /// Assigning specific people to specific rooms is drag-and-drop and stays a mouse job,
     /// but Shuffle does the assignment for you, so <i>Shuffle</i> then <i>Open rooms</i>
     /// runs the whole feature from two keys.
     ///
-    /// Opening the editor in the first place is <i>Start Meeting Tool → Breakout rooms</i>;
-    /// these three navigate there on their own if it is not already showing.
+    /// Several commands only exist in one state: Open and Close are opposites, Return to
+    /// main call only while you are inside a room, and Shuffle and Clear are greyed out
+    /// until somebody else is in the call. Asking for one that is not available is reported
+    /// to the browser console rather than pressed.
     /// </summary>
     public class BreakoutRoomsAction : PluginAction
     {
@@ -29,16 +35,23 @@ namespace FuSan21.MacroDeck.GoogleMeet.Actions
 
         public override ActionConfigControl GetActionConfigControl(ActionConfigurator actionConfigurator)
         {
-            return new ChoiceConfig<BreakoutAction>(this, "Breakout action");
+            return new BreakoutConfig(this);
         }
 
         public override void Trigger(string clientId, ActionButton actionButton)
         {
             try
             {
-                var action = ChoiceConfig<BreakoutAction>.LoadConfig(Configuration)?.Choice
-                    ?? BreakoutAction.Shuffle;
-                MeetHelper.SendBreakoutAction(action, $"{Name} ({action})");
+                var config = BreakoutConfig.LoadConfig(Configuration);
+                var action = config?.Action ?? BreakoutAction.Shuffle;
+                var room = config?.Room ?? 1;
+                var minutes = config?.Minutes ?? 30;
+
+                var summary = action == BreakoutAction.JoinRoom ? $"{action} {room}"
+                    : action == BreakoutAction.SetTimer ? $"{action} {minutes}min"
+                    : action.ToString();
+
+                MeetHelper.SendBreakoutAction(action, room, minutes, $"{Name} ({summary})");
             }
             catch (Exception ex)
             {

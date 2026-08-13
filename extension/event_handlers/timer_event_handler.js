@@ -197,22 +197,8 @@ class TimerEventHandler extends SDEventHandler {
    */
   static DurationInputSelector = '[jsname="YPqjbf"]';
 
-  /**
-   * Writes a value into one of Meet's number boxes.
-   *
-   * Assigning to `.value` alone changes what is on screen and nothing else — Meet is
-   * listening for the `input` event, not for the property — so the write goes through the
-   * prototype's own setter and the event is raised by hand. Setting the property directly
-   * would be silently swallowed by the framework's value tracking.
-   */
-  static _setInput = (input, value) => {
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-    input.focus();
-    setter.call(input, String(value));
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-    input.blur();
-  }
+  /** Meet's number boxes ignore a plain `.value =`; see the shared helper for why. */
+  static _setInput = (input, value) => MeetingToolsEventHandler.setInputValue(input, value);
 
   /**
    * Starts a stopped timer, or resumes a held one, and does nothing at all if it is

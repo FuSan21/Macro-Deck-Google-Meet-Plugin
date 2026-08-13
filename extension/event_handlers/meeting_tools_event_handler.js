@@ -59,10 +59,23 @@ class MeetingToolsEventHandler extends SDEventHandler {
    * into a two-key sequence that runs the whole feature.
    */
   static BreakoutActions = {
-    shuffle: '[jsname="ZvBrEb"]',
-    openRooms: '[jsname="vGYErf"]',
-    clear: '[jsname="uL0KOe"]',
+    edit: { selector: '[jsname="jjbqZd"]', editor: false },
+    openRooms: { selector: '[jsname="vGYErf"]', editor: true },
+    closeRooms: { selector: '[jsname="rFUlDe"]', editor: false },
+    shuffle: { selector: '[jsname="ZvBrEb"]', editor: true },
+    clear: { selector: '[jsname="uL0KOe"]', editor: true },
+    cancelChanges: { selector: '[jsname="TLo5Gb"]', editor: true },
+    returnToMainCall: { selector: '[jsname="Oogxpb"]', editor: false },
   };
+
+  /** One per room, in the order Meet lists them. Only present while rooms are open. */
+  static BreakoutJoinSelector = '[jsname="andTgb"]';
+
+  /** Opens the "End breakout rooms after a set amount of time" dialog. */
+  static BreakoutTimerSelector = '[jsname="bOBs5e"]';
+
+  /** Anything that only exists while the editor is showing. */
+  static BreakoutEditorSelector = '[jsname="TLo5Gb"]';
 
   static CardSelector = '[jsname="lTgCnb"]';
 
@@ -77,7 +90,7 @@ class MeetingToolsEventHandler extends SDEventHandler {
         this._startTool(message.tool);
         break;
       case "breakoutAction":
-        this._breakout(message.action);
+        this._breakout(message.action, message.room, message.minutes);
         break;
     }
   }
@@ -92,9 +105,28 @@ class MeetingToolsEventHandler extends SDEventHandler {
    * holds whatever Google names the next one, and needs no visible text, so it works in
    * any language.
    */
-  static confirmDialog = () => {
-    const dialog = [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')]
+  static visibleDialog = () =>
+    [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')]
       .find((d) => d.getClientRects().length);
+
+  /**
+   * Writes a value into one of Meet's number boxes.
+   *
+   * Assigning to `.value` alone changes what is on screen and nothing else — Meet listens
+   * for the `input` event, not for the property — so the write goes through the prototype's
+   * own setter and the event is raised by hand.
+   */
+  static setInputValue = (input, value) => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+    input.focus();
+    setter.call(input, String(value));
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    input.blur();
+  }
+
+  static confirmDialog = () => {
+    const dialog = MeetingToolsEventHandler.visibleDialog();
     if (!dialog) {
       return false;
     }
@@ -281,22 +313,151 @@ class MeetingToolsEventHandler extends SDEventHandler {
    * Drives the Breakout rooms editor. Everything except "set up" only exists once the
    * editor is open, so it is opened first when it is not already showing.
    */
-  _breakout = async (actionName) => {
-    const selector = MeetingToolsEventHandler.BreakoutActions[actionName];
-    if (!selector) {
+  /**
+   * Opens the Breakout rooms panel, and its editor when the action needs one.
+   *
+   * The two are separate places. The panel lists the rooms and offers Close rooms and Join;
+   * the editor — behind the same button Meet labels "Set up breakout rooms" before there
+   * are any and "Edit rooms" after — is where the room count, Shuffle, Clear, the timer and
+   * Open rooms live. Pressing the editor button when you only wanted the panel would drop
+   * the user into a form they did not ask for, so it is only pressed when needed.
+   */
+  _ensureBreakoutPanel = async (needsEditor) => {
+    const inPanel = () =>
+      document.querySelector('[jsname="jjbqZd"]')?.getClientRects().length ||
+      document.querySelector(MeetingToolsEventHandler.BreakoutEditorSelector)?.getClientRects().length;
+
+    if (!inPanel()) {
+      if (!await this._openTool("breakoutRooms")) {
+        return false;
+      }
+      if (!await MeetingToolsEventHandler.waitFor(inPanel)) {
+        console.error("The breakout rooms panel did not open.");
+        return false;
+      }
+    }
+
+    if (!needsEditor) {
+      return true;
+    }
+
+    if (document.querySelector(MeetingToolsEventHandler.BreakoutEditorSelector)?.getClientRects().length) {
+      return true;
+    }
+
+    document.querySelector('[jsname="jjbqZd"]')?.click();
+    if (!await MeetingToolsEventHandler.waitFor(
+      () => document.querySelector(MeetingToolsEventHandler.BreakoutEditorSelector)?.getClientRects().length)) {
+      console.error("The breakout rooms editor did not open.");
+      return false;
+    }
+
+    return true;
+  }
+
+  _breakout = async (actionName, roomNumber, minutes) => {
+    // Closing the rooms asks "Close all breakout rooms?" first, so a press with a dialog
+    // already up is answering it — the same two-press shape recording uses.
+    if (MeetingToolsEventHandler.confirmDialog()) {
+      return;
+    }
+
+    if (actionName === "joinRoom") {
+      return await this._breakoutJoin(roomNumber);
+    }
+
+    if (actionName === "setTimer") {
+      return await this._breakoutTimer(minutes);
+    }
+
+    const action = MeetingToolsEventHandler.BreakoutActions[actionName];
+    if (!action) {
       console.error("Unknown breakout action requested:", actionName);
       return;
     }
 
-    if (!document.querySelector(selector)) {
-      await this._startTool("breakoutRooms");
-      if (!await MeetingToolsEventHandler.waitFor(() => document.querySelector(selector))) {
-        console.error(`Could not reach the breakout rooms editor to ${actionName}.`);
-        return;
-      }
+    if (!await this._ensureBreakoutPanel(action.editor)) {
+      return;
     }
 
-    document.querySelector(selector).click();
+    const target = document.querySelector(action.selector);
+    if (!target || !target.getClientRects().length) {
+      console.error(
+        `Breakout rooms offers no "${actionName}" right now — Open rooms and Close rooms ` +
+        "each only exist in the opposite state, and Return to main call only while you are in a room.");
+      return;
+    }
+
+    if (target.disabled || target.getAttribute("aria-disabled") === "true") {
+      // Shuffle and Clear are greyed out until there is somebody other than you to move.
+      console.error(`"${actionName}" is disabled — there may be nobody in the call to assign.`);
+      return;
+    }
+
+    target.click();
+  }
+
+  /** Joins the nth room, counting the way Meet lists them, from 1. */
+  _breakoutJoin = async (roomNumber) => {
+    if (!await this._ensureBreakoutPanel(false)) {
+      return;
+    }
+
+    const rooms = [...document.querySelectorAll(MeetingToolsEventHandler.BreakoutJoinSelector)]
+      .filter((b) => b.getClientRects().length);
+
+    if (!rooms.length) {
+      console.error("No breakout rooms to join — they are not open yet.");
+      return;
+    }
+
+    const index = (Number.isInteger(roomNumber) ? roomNumber : 1) - 1;
+    if (index < 0 || index >= rooms.length) {
+      console.error(`There is no room ${index + 1}; the call has ${rooms.length}.`);
+      return;
+    }
+
+    // Joining navigates the tab to the room's own meeting, which tears this content script
+    // down and loads a fresh one. The socket reconnects by itself a moment later.
+    rooms[index].click();
+  }
+
+  /**
+   * Sets the countdown that returns everyone to the main call, or clears it when given
+   * nothing. Meet keeps this behind a dialog with a tick-box and a minutes field.
+   */
+  _breakoutTimer = async (minutes) => {
+    if (!await this._ensureBreakoutPanel(true)) {
+      return;
+    }
+
+    const button = document.querySelector(MeetingToolsEventHandler.BreakoutTimerSelector);
+    if (!button) {
+      console.error("No breakout timer button found.");
+      return;
+    }
+
+    button.click();
+    if (!await MeetingToolsEventHandler.waitFor(() => MeetingToolsEventHandler.visibleDialog())) {
+      console.error("The breakout timer dialog did not open.");
+      return;
+    }
+
+    const dialog = MeetingToolsEventHandler.visibleDialog();
+    const tick = dialog.querySelector('input[type="checkbox"]');
+    const field = dialog.querySelector('input[type="number"]');
+    const wanted = Number.isInteger(minutes) && minutes > 0;
+
+    if (tick && tick.checked !== wanted) {
+      tick.click();
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+
+    if (wanted && field) {
+      MeetingToolsEventHandler.setInputValue(field, minutes);
+    }
+
+    MeetingToolsEventHandler.confirmDialog();
   }
 
   /**

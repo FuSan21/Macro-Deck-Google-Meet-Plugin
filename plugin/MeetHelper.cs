@@ -140,14 +140,28 @@ namespace FuSan21.MacroDeck.GoogleMeet
             return Send(message, description);
         }
 
-        /// <summary>Presses one button in Meet's Breakout rooms editor.</summary>
-        public static bool SendBreakoutAction(BreakoutAction action, string description)
+        /// <summary>
+        /// Drives Meet's breakout rooms. <paramref name="room"/> only matters for
+        /// <see cref="BreakoutAction.JoinRoom"/> and <paramref name="minutes"/> only for
+        /// <see cref="BreakoutAction.SetTimer"/>, where zero clears the countdown.
+        /// </summary>
+        public static bool SendBreakoutAction(
+            BreakoutAction action, int room, int minutes, string description)
         {
             var message = new JObject
             {
                 ["event"] = MeetProtocol.Outbound.BreakoutAction,
                 ["action"] = BreakoutActionNames.For(action),
             };
+
+            if (action == BreakoutAction.JoinRoom)
+            {
+                message["room"] = room;
+            }
+            else if (action == BreakoutAction.SetTimer)
+            {
+                message["minutes"] = minutes;
+            }
 
             return Send(message, description);
         }
