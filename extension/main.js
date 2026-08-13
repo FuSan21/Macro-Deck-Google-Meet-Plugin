@@ -26,6 +26,7 @@ const eventHandlers = [
   new MeetingStateEventHandler(connectionManager),
   new PresentEventHandler(connectionManager),
   new MeetingToolsEventHandler(connectionManager),
+  new HostControlsEventHandler(connectionManager),
   new TimerEventHandler(connectionManager),
 ];
 

@@ -80,8 +80,11 @@ namespace FuSan21.MacroDeck.GoogleMeet
             /// <summary>Fork only.</summary>
             public const string ToggleMeetingDetails = "toggleMeetingDetails";
 
-            /// <summary>Fork only.</summary>
-            public const string ToggleTranscription = "toggleTranscription";
+            /// <summary>Fork only. Presses a tool's main button. Carries a <c>tool</c> field.</summary>
+            public const string StartMeetingTool = "startMeetingTool";
+
+            /// <summary>Fork only. Carries a <c>control</c> field; see <see cref="HostControlNames"/>.</summary>
+            public const string ToggleHostControl = "toggleHostControl";
 
             /// <summary>Fork only.</summary>
             public const string TimerStartPause = "timerStartPause";
@@ -91,6 +94,58 @@ namespace FuSan21.MacroDeck.GoogleMeet
 
             /// <summary>Fork only.</summary>
             public const string TimerAddMinute = "timerAddMinute";
+
+            /// <summary>Fork only.</summary>
+            public const string TimerToggleAlarm = "timerToggleAlarm";
+        }
+    }
+
+    /// <summary>
+    /// The switches in Meet's Host controls panel, which only the host has.
+    ///
+    /// Several of them stay greyed out until <see cref="HostManagement"/> is on; asking
+    /// for one of those first is reported to the browser console rather than pressed.
+    /// </summary>
+    public enum HostControl
+    {
+        HostManagement,
+        LetContributorsShareScreen,
+        LetContributorsSendReactions,
+        LetContributorsUnmute,
+        LetContributorsTurnOnVideo,
+        LetParticipantsSendMessages,
+        ContinuousMeetingChat,
+        AskGemini,
+        AllowQuestions,
+        HideQuestionsUntilApproved,
+        AllowAnonymousQuestions,
+        AllowQuestionsInLiveStream,
+        LetContributorsShareAddOns,
+        AllowThirdPartyCapture,
+    }
+
+    internal static class HostControlNames
+    {
+        /// <summary>Maps to the keys of <c>HostControlsEventHandler.Controls</c> in the extension.</summary>
+        public static string For(HostControl control)
+        {
+            switch (control)
+            {
+                case HostControl.LetContributorsShareScreen: return "shareScreen";
+                case HostControl.LetContributorsSendReactions: return "sendReactions";
+                case HostControl.LetContributorsUnmute: return "turnOnMicrophone";
+                case HostControl.LetContributorsTurnOnVideo: return "turnOnVideo";
+                case HostControl.LetParticipantsSendMessages: return "sendMessages";
+                case HostControl.ContinuousMeetingChat: return "continuousChat";
+                case HostControl.AskGemini: return "askGemini";
+                case HostControl.AllowQuestions: return "allowQuestions";
+                case HostControl.HideQuestionsUntilApproved: return "moderateQuestions";
+                case HostControl.AllowAnonymousQuestions: return "anonymousQuestions";
+                case HostControl.AllowQuestionsInLiveStream: return "questionsInLiveStream";
+                case HostControl.LetContributorsShareAddOns: return "shareAddOns";
+                case HostControl.AllowThirdPartyCapture: return "thirdPartyCapture";
+                default: return "hostManagement";
+            }
         }
     }
 
@@ -137,6 +192,7 @@ namespace FuSan21.MacroDeck.GoogleMeet
         StartOrPause,
         Cancel,
         AddOneMinute,
+        ToggleAlarm,
     }
 
     internal static class TimerCommands
@@ -147,6 +203,7 @@ namespace FuSan21.MacroDeck.GoogleMeet
             {
                 case TimerCommand.Cancel: return MeetProtocol.Outbound.TimerCancel;
                 case TimerCommand.AddOneMinute: return MeetProtocol.Outbound.TimerAddMinute;
+                case TimerCommand.ToggleAlarm: return MeetProtocol.Outbound.TimerToggleAlarm;
                 default: return MeetProtocol.Outbound.TimerStartPause;
             }
         }

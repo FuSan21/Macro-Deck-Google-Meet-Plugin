@@ -39,7 +39,7 @@ namespace FuSan21.MacroDeck.GoogleMeet.Actions
             try
             {
                 var tool = ChoiceConfig<MeetingTool>.LoadConfig(Configuration)?.Choice ?? MeetingTool.Record;
-                MeetHelper.SendMeetingTool(tool, $"{Name} ({tool})");
+                MeetHelper.SendMeetingTool(tool, start: false, $"{Name} ({tool})");
             }
             catch (Exception ex)
             {

@@ -76,8 +76,9 @@ bind it to the button's state, so the key lights up to match Meet without any ex
 | Send Reaction | which emoji | | |
 | Toggle Presenting | | `meet_is_presenting` | ✅ |
 | Open Meeting Tool | which tool | | ✅ |
-| Toggle Transcription | | | ✅ |
-| Timer | start/pause, cancel, +1 min | | ✅ |
+| Start Meeting Tool | which tool | | ✅ |
+| Timer | start/pause, cancel, +1 min, alarm | | ✅ |
+| Toggle Host Control | which switch | | ✅ |
 | Toggle Meeting Tools | | | ✅ |
 | Toggle Host Controls | | | ✅ |
 | Toggle Meeting Details | | | ✅ |
@@ -104,24 +105,48 @@ does not need the extension — there is no call to talk to yet, which is rather
 ### Meeting tools
 
 Record, Transcribe, Polls, Q&A, Breakout rooms, Speech translation, Timer and Live streaming
-are not toolbar buttons. They are cards inside a side panel that has to be opened first, and
-most of them then present a sub-panel where the actual work happens. So:
+are not toolbar buttons. Each is a card inside a side panel that has to be opened first, and
+each then presents a sub-panel where the actual work happens. Two actions cover all of them:
 
-- **Open Meeting Tool** gets you *to* any of the eight in one press. It does not stand in for
-  the tool — Polls still needs you to write the poll.
-- **Toggle Transcription** is a real one-press start/stop, because Transcribe is the one tool
-  whose control sits on the card itself rather than behind a sub-panel.
-- **Timer** reaches two levels deep on its own, so start/pause, cancel and +1 minute work from
-  anywhere in the call. Setting the duration is still typing — that is two text fields, not a
-  button.
+- **Open Meeting Tool** navigates to a tool and stops there.
+- **Start Meeting Tool** goes one step further and presses that tool's main button:
+
+  | Tool | Button pressed |
+  |---|---|
+  | Record | Start recording |
+  | Transcribe | Start transcription |
+  | Polls | Start a poll |
+  | Q&A | Ask a question |
+  | Breakout rooms | Set up breakout rooms |
+  | Speech translation | Enable translation for everyone |
+  | Timer | start, or pause a running timer |
+
+  What happens after the press is Meet's business — a poll opens a composer, a recording may
+  ask for consent. This gets you to the point where the only thing left genuinely needs a
+  human. Live streaming has no single button, so it is Open-only.
+
+**Timer** reaches two levels deep on its own, so start/pause, cancel, +1 minute and the alarm
+toggle all work from anywhere in the call. Setting the duration is still typing — that is two
+text fields, not a button.
 
 Which cards a meeting offers depends on the host's Workspace plan and on whether you are the
-host; a personal account sees only Speech translation and Timer. Asking for a tool that is not
-on offer logs the miss to the browser console along with the cards that *were* there, and
-presses nothing.
+host; a personal Google account sees only Speech translation and Timer. Asking for a tool that
+is not on offer logs the miss to the browser console along with the cards that *were* there,
+and presses nothing.
 
-Recording has no single-press action. Meet puts Record's start behind its sub-panel with a
-confirmation, so **Open Meeting Tool → Record** is as far as one key goes.
+### Host controls
+
+**Toggle Host Control** flips one switch in the host panel — fourteen of them, from the
+`Host management` master switch down to who may unmute, share, react, chat or ask questions.
+Most stay greyed out until `Host management` is on, so that is usually the first to bind.
+
+Only the host has this panel. For anyone else Meet does not render it, and the extension says
+so rather than pressing something.
+
+This is the one part of the plugin that is **English-only**. Every switch carries the same
+automation attribute and none has an icon, so the visible label is all that distinguishes
+them — and Meet translates it. Matching by position instead would silently start flipping the
+wrong setting the day Google inserts a fifteenth switch, which is a worse failure than a miss.
 
 [zen]: https://github.com/verlok/google-meet-true-full-screen
 

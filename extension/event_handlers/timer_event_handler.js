@@ -24,6 +24,9 @@ class TimerEventHandler extends SDEventHandler {
 
   static AddMinuteSelector = '[jsname="xLroh"]';
 
+  /** Whether the timer makes a noise when it runs out. Carries aria-pressed. */
+  static AlarmSelector = '[jsname="EAB7Kc"]';
+
   handleStreamDeckEvent = (message) => {
     switch (message.event) {
       case "timerStartPause":
@@ -34,6 +37,9 @@ class TimerEventHandler extends SDEventHandler {
         break;
       case "timerAddMinute":
         this._press(TimerEventHandler.AddMinuteSelector, "add a minute");
+        break;
+      case "timerToggleAlarm":
+        this._press(TimerEventHandler.AlarmSelector, "toggle the alarm");
         break;
     }
   }

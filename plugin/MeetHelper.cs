@@ -87,13 +87,30 @@ namespace FuSan21.MacroDeck.GoogleMeet
             return Send(message, description);
         }
 
-        /// <summary>Opens one card in Meet's "Meeting tools" side panel.</summary>
-        public static bool SendMeetingTool(MeetingTool tool, string description)
+        /// <summary>
+        /// Opens one card in Meet's "Meeting tools" side panel, or presses that tool's main
+        /// button when <paramref name="start"/> is set.
+        /// </summary>
+        public static bool SendMeetingTool(MeetingTool tool, bool start, string description)
         {
             var message = new JObject
             {
-                ["event"] = MeetProtocol.Outbound.OpenMeetingTool,
+                ["event"] = start
+                    ? MeetProtocol.Outbound.StartMeetingTool
+                    : MeetProtocol.Outbound.OpenMeetingTool,
                 ["tool"] = MeetingToolNames.For(tool),
+            };
+
+            return Send(message, description);
+        }
+
+        /// <summary>Flips one switch in Meet's Host controls panel.</summary>
+        public static bool SendHostControl(HostControl control, string description)
+        {
+            var message = new JObject
+            {
+                ["event"] = MeetProtocol.Outbound.ToggleHostControl,
+                ["control"] = HostControlNames.For(control),
             };
 
             return Send(message, description);
