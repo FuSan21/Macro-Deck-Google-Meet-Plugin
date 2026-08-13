@@ -110,26 +110,109 @@ class HostControlsEventHandler extends SDEventHandler {
       return;
     }
 
-    for (const name of HostControlsEventHandler.ApplyOrder) {
-      if (typeof controls[name] !== "boolean") {
-        continue;
+    // Host management goes first and alone. Switching it on makes Meet rewrite the panel —
+    // rows ungrey and several snap back to their defaults — and it does that a moment
+    // later, not synchronously. Anything set during that window is silently undone, so
+    // this waits for the panel to stop moving before touching anything else.
+    if (typeof controls.hostManagement === "boolean") {
+      if (await this._set("hostManagement", controls.hostManagement)) {
+        await HostControlsEventHandler._waitUntilSettled();
       }
-
-      // Access has to be Trusted before its nested checkbox means anything, so it is
-      // applied once Host management is on and before everything downstream of it.
-      if (name === "shareScreen" && access) {
-        await this._setAccess(access);
-      }
-
-      await this._set(name, controls[name]);
     }
 
-    if (access && typeof controls.hostManagement !== "boolean") {
+    // Access before the checkbox nested under it, which only means anything on Trusted.
+    if (access) {
       await this._setAccess(access);
+    }
+
+    for (const name of HostControlsEventHandler.ApplyOrder) {
+      if (name === "hostManagement" || typeof controls[name] !== "boolean") {
+        continue;
+      }
+      await this._set(name, controls[name]);
     }
 
     if (typeof controls.anyoneWithLinkCanAsk === "boolean") {
       await this._set("anyoneWithLinkCanAsk", controls.anyoneWithLinkCanAsk);
+    }
+
+    await HostControlsEventHandler._waitUntilSettled();
+    await this._verify(controls);
+  }
+
+  /**
+   * A snapshot of every row's state, used to tell whether Meet has finished rearranging
+   * the panel. Disabled-ness is included because ungreying is part of what changes.
+   */
+  static _panelSignature = () => {
+    const selector = `${HostControlsEventHandler.SwitchSelector}, ${HostControlsEventHandler.BoxSelector}`;
+    return [...document.querySelectorAll(selector)]
+      .filter((e) => e.getClientRects().length)
+      .map((e) => {
+        const on = HostControlsEventHandler._isOn(e) ? "1" : "0";
+        const off = (e.disabled || e.getAttribute("aria-disabled") === "true") ? "d" : "e";
+        return on + off;
+      })
+      .join("");
+  }
+
+  /**
+   * Waits until the panel has looked the same for a short while.
+   *
+   * Polling for quiet rather than sleeping a fixed amount: the rewrite Meet does after
+   * Host management is turned on has no announced end, and how long it takes depends on
+   * the meeting and the connection. A fixed delay would be either too short sometimes or
+   * needlessly slow always.
+   */
+  static _waitUntilSettled = async (quietMs = 700, timeoutMs = 6000) => {
+    let previous = null;
+    let unchangedSince = 0;
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      const signature = HostControlsEventHandler._panelSignature();
+
+      if (signature === previous) {
+        if (Date.now() - unchangedSince >= quietMs) {
+          return true;
+        }
+      } else {
+        previous = signature;
+        unchangedSince = Date.now();
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+
+    console.warn("Meet's host controls panel is still changing; applying anyway.");
+    return false;
+  }
+
+  /**
+   * Second pass over everything that was asked for, putting back anything Meet reset.
+   *
+   * The settle wait handles the common case, but this is the part that actually
+   * guarantees the result: whatever the panel did while we were working, the settings end
+   * up as configured or the reason is in the console.
+   */
+  _verify = async (controls) => {
+    for (const [name, wanted] of Object.entries(controls)) {
+      if (typeof wanted !== "boolean") {
+        continue;
+      }
+
+      const control = HostControlsEventHandler.Controls[name];
+      const target = control && this._find(control);
+      if (!target || target.disabled || target.getAttribute("aria-disabled") === "true") {
+        continue;
+      }
+
+      if (HostControlsEventHandler._isOn(target) === wanted) {
+        continue;
+      }
+
+      console.warn(`"${control.label}" did not stick — Meet reset it. Setting it again.`);
+      await this._set(name, wanted);
     }
   }
 
@@ -160,31 +243,33 @@ class HostControlsEventHandler extends SDEventHandler {
     await new Promise((resolve) => setTimeout(resolve, 600));
   }
 
+  /** Returns whether the row was actually clicked, so callers can wait only when it was. */
   _set = async (controlName, wanted) => {
     const control = HostControlsEventHandler.Controls[controlName];
     if (!control) {
       console.error("Unknown host control requested:", controlName);
-      return;
+      return false;
     }
 
     const target = this._find(control);
     if (!target) {
       console.error(`No host control matching "${control.label}"; leaving it alone.`);
-      return;
+      return false;
     }
 
     if (target.getAttribute("aria-disabled") === "true" || target.disabled) {
       console.error(`The "${control.label}" control is disabled; leaving it alone.`);
-      return;
+      return false;
     }
 
     if (HostControlsEventHandler._isOn(target) === wanted) {
-      return;
+      return false;
     }
 
     target.click();
     await new Promise((resolve) => setTimeout(resolve, 400));
     await HostControlsEventHandler._confirmIfAsked();
+    return true;
   }
 
   /**
